@@ -1,0 +1,65 @@
+.authModal {
+  .ant-modal-header {
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .ant-modal-body {
+    padding: 24px;
+  }
+
+  .ant-tabs {
+    .ant-tabs-tab {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .ant-tabs-content-holder {
+      padding-top: 20px;
+    }
+  }
+
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+
+  .ant-input-affix-wrapper,
+  .ant-select-selector {
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+
+    &:hover {
+      border-color: #40a9ff;
+    }
+
+    &:focus,
+    &.ant-input-affix-wrapper-focused,
+    &.ant-select-focused .ant-select-selector {
+      border-color: #40a9ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+  }
+
+  .ant-btn-primary {
+    height: 40px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+
+    &:hover {
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .ant-input-prefix {
+    color: #8c8c8c;
+  }
+}

@@ -1,0 +1,147 @@
+@import (reference) '@/styles/theme.less';
+
+.detailsPage {
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+}
+
+// ========== Header ==========
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  .pageTitle {
+    color: @primary-blue;
+    margin: 0 !important;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .saveButton {
+    height: 48px;
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 20px;
+    color: @secondary-blue;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+
+  :global(.ant-btn).saveButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+}
+
+// ========== Main Content ==========
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+// ========== Card Section ==========
+.projectSection {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+  animation: fadeInUp 0.3s ease-out;
+  background: #fff;
+  padding: 16px;
+
+  .ant-card-head-title {
+    font-weight: 600;
+    color: @primary-blue;
+  }
+
+  .ant-table-thead > tr > th {
+    background-color: #f8f9fc;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .ant-table-tbody > tr:hover > td {
+    background-color: #fafafa;
+  }
+
+  .ant-table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+// ========== Table Item Buttons ==========
+.actionButton {
+  border-radius: 6px;
+  font-weight: 500;
+  color: @secondary-blue;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+
+  &:hover {
+    transform: translateY(-1px);
+    background-color: fade(@secondary-blue, 10%);
+    border-color: fade(@secondary-blue, 30%);
+  }
+}
+
+// ========== Empty States ==========
+.ant-empty-description {
+  color: #888;
+  font-style: italic;
+}
+
+// ========== Responsive Design ==========
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .detailsPage {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .pageTitle {
+      font-size: 20px;
+    }
+
+    .backButton {
+      align-self: stretch;
+    }
+  }
+}
+
+// ========== Animation ==========
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ========== Accessibility ==========
+.backButton:focus,
+.actionButton:focus {
+  outline: 2px solid @secondary-blue;
+  outline-offset: 2px;
+}
+
+

@@ -1,0 +1,381 @@
+@import (reference) '@/styles/theme.less';
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.backButton {
+  border-radius: 8px;
+  background-color: @button-color;
+  border: none;
+  padding: 8px 20px;
+  height: 40px;
+  font-weight: 600;
+  font-size: 16px;
+  color: @secondary-blue;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+}
+:global(.ant-btn).backButton:hover {
+  background-color: @button-color-hover;
+  color: @secondary-blue;
+  box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+  transform: translateY(-1px);
+}
+
+.pageTitle {
+  margin: 0 !important;
+  flex: 1;
+}
+
+.formCard {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: none;
+  background: white;
+
+  :global(.ant-card-body) {
+    padding: 40px;
+  }
+}
+
+.form {
+  .actionButtons {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+
+    .actionButton {
+      flex: 1;
+      height: 48px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 15px;
+      border-color: #ff7875;
+      color: #ff7875;
+      background: white;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #fff2f0;
+        border-color: #ff4d4f;
+        color: #ff4d4f;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
+      }
+    }
+  }
+  .submitSection {
+    margin-top: 40px;
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .submitButton {
+    min-width: 200px;
+    height: 48px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: @button-color;
+    border: none;
+    color: @secondary-blue;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: @button-color-hover;
+      color: @secondary-blue;
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-2px);
+    }
+  }
+
+  .dateRangeContainer {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .datePickerWrapper {
+      flex: 1;
+    }
+  }
+
+  .projectTypeSelection {
+    display: flex;
+    gap: 16px;
+
+    .typeCard {
+      flex: 1;
+      cursor: pointer;
+      border: 2px solid #d9d9d9;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #1890ff;
+      }
+
+      &.selected {
+        border-color: #1890ff;
+        background-color: #f0f8ff;
+      }
+    }
+
+    .typeCardContent {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .typeIcon {
+        font-size: 24px;
+        color: #1890ff;
+      }
+
+      .typeTitle {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+
+      .typeDescription {
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// Global form styles
+:global(.ant-form-item-label > label) {
+  color: @primary-blue;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+:global(.ant-input),
+:global(.ant-input-affix-wrapper),
+:global(.ant-picker) {
+  border-radius: 8px;
+  border-color: #d9d9d9;
+  padding: 12px 16px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: @secondary-blue;
+  }
+
+  &:focus,
+  &:focus-within {
+    border-color: @secondary-blue;
+    box-shadow: 0 0 0 2px rgba(3, 15, 67, 0.1);
+  }
+}
+
+// Assessment Criteria Card Styles
+.assessmentCard {
+  background-color: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.assessmentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.assessmentTitle {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+
+.criteriaListContainer {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 16px;
+  padding-right: 8px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 3px;
+
+    &:hover {
+      background: #999;
+    }
+  }
+}
+
+.criteriaList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.criterionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 6px rgba(24, 144, 255, 0.12);
+    transform: translateX(4px);
+  }
+}
+
+.criterionName {
+  flex: 1;
+  min-width: 0;
+  margin-right: 16px;
+
+  :global(.ant-typography) {
+    color: #262626;
+    font-size: 15px;
+  }
+}
+
+.criterionDetails {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+
+  :global(.ant-tag) {
+    margin: 0;
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+}
+
+// Groups info styles
+.groupsInfo {
+  margin-top: 8px;
+}
+
+.groupsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.groupCard {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+  }
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.groupName {
+  color: #1890ff;
+}
+
+.memberCount {
+  color: #666;
+  font-size: 13px;
+}
+
+.groupMembers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memberTag {
+  padding: 2px 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.noGroups {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  color: #999;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .formCard {
+    :global(.ant-card-body) {
+      padding: 24px;
+    }
+  }
+
+  .form {
+    .dateRangeContainer {
+      flex-direction: column;
+    }
+  }
+
+  .submitButton {
+    min-width: 100%;
+  }
+
+  .assessmentHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .criterionItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .criterionName {
+    margin-right: 0;
+  }
+
+  .criterionDetails {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

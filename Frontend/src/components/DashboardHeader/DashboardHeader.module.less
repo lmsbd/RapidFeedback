@@ -1,0 +1,22 @@
+@import (reference) '@/styles/theme.less';
+
+.dashboardHeader {
+  background: linear-gradient(135deg, @primary-blue 0%, lighten(@primary-blue, 10%) 100%);
+  padding: 24px 32px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 21, 41, 0.15);
+
+  .dashboardTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dashboardText {
+    color: white;
+    margin: 0;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}

@@ -1,0 +1,142 @@
+@import (reference) '@/styles/theme.less';
+
+.page {
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  background: white;
+}
+
+.headerMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 !important;
+  color: @primary-blue;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.metaRow {
+  margin-top: 6px;
+}
+
+.countdown {
+  min-width: 120px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.countdownInner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 1200px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.markCell {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
+}
+
+.markValue {
+  font-weight: 600;
+  min-width: 32px;
+  text-align: right;
+}
+
+.markMeta {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+
+.presetOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.presetContent {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 480px;
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 16px;
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.totalValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: @primary-blue;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .countdown {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+

@@ -1,0 +1,197 @@
+@import (reference) '@/styles/theme.less';
+
+.commentListPage {
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+}
+
+// Header
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  .backButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    color: @secondary-blue;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+
+    &:hover {
+      background-color: @button-color-hover;
+      color: @secondary-blue;
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+
+  .pageTitle {
+    color: @primary-blue;
+    margin: 0 !important;
+    font-weight: 600;
+    flex: 1;
+  }
+}
+
+// Main Content
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 100px; // Space for fixed add button
+}
+
+.commentSection {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+
+  .sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .typeTag {
+      font-weight: 500;
+      font-size: 18px;
+      border-radius: 6px;
+    }
+
+    .count {
+      color: #666;
+      font-size: 14px;
+    }
+  }
+}
+
+.commentItem {
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #fafafa;
+    border-radius: 8px;
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.commentContent {
+  flex: 1;
+
+  .ant-typography {
+    color: #333;
+    line-height: 1.6;
+    font-size: 16px;
+  }
+}
+
+.actionButton {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 60px 20px;
+}
+
+// Add Button
+.addButtonContainer {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.addButton {
+  background: linear-gradient(135deg, @primary-blue 0%, lighten(@primary-blue, 10%) 100%);
+  border: none;
+  border-radius: 24px;
+  padding: 12px 32px;
+  height: 48px;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 4px 16px rgba(2, 11, 50, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, lighten(@primary-blue, 5%) 0%, lighten(@primary-blue, 15%) 100%);
+    box-shadow: 0 6px 20px rgba(2, 11, 50, 0.4);
+    transform: translateY(-2px);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .commentListPage {
+    padding: 16px;
+  }
+
+  .header {
+    padding: 16px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .pageTitle {
+      font-size: 20px;
+    }
+  }
+
+  .mainContent {
+    margin-bottom: 80px;
+  }
+
+  .addButtonContainer {
+    bottom: 16px;
+  }
+
+  .addButton {
+    padding: 10px 24px;
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+// Animation
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.commentSection {
+  animation: fadeInUp 0.3s ease-out;
+}

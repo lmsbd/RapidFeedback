@@ -1,0 +1,228 @@
+@import (reference) '@/styles/theme.less';
+
+.detailsPage {
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+}
+
+// Header
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  .titleSection {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pageTitle {
+    color: @primary-blue;
+    margin: 0 !important;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .backButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 20px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+
+  :global(.ant-btn).backButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .createButton {
+    height: 48px;
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+
+  :global(.ant-btn).createButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .editSubjectButton {
+    width: 48px;
+    min-width: 48px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Main Content
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.projectSection {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.projectItem {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #fafafa;
+    border-radius: 8px;
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .itemBody {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    justify-content: space-around;
+    align-items: center;
+
+    .itemName {
+      text-align: center;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: @secondary-blue;
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        outline: 2px solid @secondary-blue;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+    }
+
+    .itemRatio {
+      display: flex;
+      justify-content: center;
+
+      .itemCnt {
+        color: #666;
+        margin: 0 2px;
+      }
+    }
+
+    .itemBtns {
+      display: flex;
+      justify-content: center;
+      gap: 12px; // Match commentList spacing
+    }
+  }
+}
+
+.actionButton {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+}
+
+.deleteButton {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .detailsPage {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .titleSection {
+      width: 100%;
+    }
+
+    .pageTitle {
+      font-size: 20px;
+    }
+
+    .createButton {
+      align-self: stretch;
+    }
+  }
+
+  .projectItem .itemBody {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+// Animation
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Focus states for accessibility
+.createButton:focus,
+.editSubjectButton:focus,
+.actionButton:focus {
+  outline: 2px solid @secondary-blue;
+  outline-offset: 2px;
+}

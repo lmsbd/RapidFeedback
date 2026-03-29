@@ -1,0 +1,170 @@
+@import (reference) '@/styles/theme.less';
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  .backButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 20px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+    margin-right: 20px;
+  }
+  :global(.ant-btn).backButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+}
+.buttonGroup {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  align-items: center;
+
+  .groupSizeContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    .randomButton {
+      border-radius: 8px;
+      background-color: @button-color;
+      border: none;
+      padding: 8px 20px;
+      height: 33px;
+      width: 130px;
+      font-weight: 600;
+      font-size: 16px;
+      color: @secondary-blue;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+      margin-right: 20px;
+    }
+    :global(.ant-btn).randomButton:hover {
+      background-color: @button-color-hover;
+      color: @secondary-blue;
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.clearButton {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 20px;
+  margin-bottom: 12px;
+}
+
+.confirmButton {
+  margin-top: 24px;
+  border-radius: 8px;
+  background-color: @button-color;
+  border: none;
+  padding: 8px 20px;
+  height: 40px;
+  font-weight: 600;
+  font-size: 16px;
+  color: @secondary-blue;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  margin-right: 20px;
+}
+:global(.ant-btn).confirmButton:hover {
+  background-color: @button-color-hover;
+  color: @secondary-blue;
+  box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+  transform: translateY(-1px);
+}
+
+// 组容器样式
+.groupsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+// 组卡片样式
+.groupCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+}
+
+// 组头部样式
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.groupName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.studentCount {
+  background: #f6ffed;
+  color: #52c41a;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+// 学生容器样式
+.studentsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+// 学生卡片样式
+.studentCard {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f9ff;
+    border-color: #1890ff;
+  }
+}
+
+.studentId {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 4px;
+}
+
+.studentName {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}

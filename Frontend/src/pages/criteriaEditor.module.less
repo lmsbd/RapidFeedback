@@ -1,0 +1,197 @@
+@import (reference) '@/styles/theme.less';
+
+.criteriaEditorPage {
+  min-height: 100vh;
+  background: #f6f7f9;
+  padding: 24px;
+}
+
+// Header
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  .backButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 16px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+
+    &:hover {
+      background-color: @button-color-hover;
+      color: @secondary-blue;
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+
+  .pageTitle {
+    color: @primary-blue;
+    margin: 0 !important;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+  }
+
+  .saveButton {
+    border-radius: 8px;
+    border: none;
+    padding: 8px 16px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    background-color: @primary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+
+    &:hover {
+      background-color: lighten(@primary-blue, 10%);
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Main Content
+.mainContent {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+}
+
+.criteriaForm {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.criteriaCard {
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e8e8e8;
+  margin-bottom: 16px;
+  animation: fadeInUp 0.3s ease-out;
+  transition: all 0.3s ease;
+
+  &.unselected {
+    opacity: 0.6;
+    background-color: #fafafa;
+  }
+}
+
+.criteriaHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 0;
+
+  .criteriaCheckbox {
+    font-size: 18px;
+  }
+
+  .criteriaNameInput {
+    flex: 1;
+    margin-bottom: 0;
+
+    :global(.ant-input) {
+      font-size: 18px;
+      font-weight: 500;
+      border-radius: 6px;
+    }
+  }
+
+  .criteriaNameDisplay {
+    flex: 1;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.criteriaDivider {
+  margin: 8px 0 16px;
+}
+
+.criteriaDetails {
+  margin-top: 16px;
+}
+
+.weightingInput {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.numberInput {
+  width: 100%;
+  border-radius: 6px;
+  
+  :global(.ant-input-number-handler-wrap) {
+    border-radius: 0 6px 6px 0;
+  }
+}
+
+.sliderInput {
+  margin-top: 8px;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .criteriaEditorPage {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    .pageTitle {
+      order: -1;
+      margin-bottom: 16px !important;
+      text-align: left;
+    }
+
+    .backButton, .saveButton {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .mainContent {
+    padding: 20px;
+  }
+
+  .criteriaHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+// Animation
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

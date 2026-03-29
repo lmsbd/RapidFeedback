@@ -1,0 +1,155 @@
+@import (reference) '@/styles/theme.less';
+
+.subjectPage {
+  min-height: 100vh;
+  background: #f6f7f9;
+  padding: 0;
+}
+
+// Main Content
+.mainContent {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+}
+
+.contentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+
+  // Create Button
+  .createSection {
+    display: flex;
+    align-items: center;
+
+    .createButton {
+      border-radius: 8px;
+      background-color: @button-color;
+      border: none;
+      padding: 8px 20px;
+      height: 40px;
+      font-weight: 600;
+      font-size: 16px;
+      color: @secondary-blue;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+
+      .creationIcon {
+        color: @secondary-blue;
+        margin-right: 8px;
+      }
+    }
+
+    :global(.ant-btn).createButton:hover {
+      background-color: @button-color-hover;
+      color: @secondary-blue;
+      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+      transform: translateY(-1px);
+
+      .creationIcon {
+        color: @secondary-blue;
+      }
+    }
+  }
+}
+
+// Subject List
+.subjectList {
+  margin-bottom: 32px;
+}
+
+.subjectItem {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+
+  &:hover {
+    border-color: @secondary-blue;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+    transform: translateY(-1px);
+    cursor: pointer;
+  }
+
+  .itemContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .itemContent {
+      padding: 8px 0;
+    }
+
+    .itemName {
+      color: @primary-blue;
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+
+    .itemDescription {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .dashboardHeader {
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  .mainContent {
+    padding: 20px;
+  }
+
+  .contentHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dashboardTitle {
+    gap: 8px;
+  }
+}
+
+// Animation for smooth transitions
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subjectItem {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+// Focus states for accessibility
+.createButton:focus {
+  outline: 2px solid @secondary-blue;
+  outline-offset: 2px;
+}
+
+// Loading state
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: @secondary-blue;
+  font-size: 16px;
+}

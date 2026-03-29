@@ -1,0 +1,20 @@
+services:
+  mysql:
+    build: .
+    container_name: rfo-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: rfo_db
+      MYSQL_USER: rfo_user
+      MYSQL_PASSWORD: rfo_password
+      TZ: Australia/Melbourne
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+    # Use custom startup script (remove command to use Dockerfile CMD)
+
+volumes:
+  mysql_data:
