@@ -6,7 +6,7 @@
     "build": "umi build",
     "postinstall": "umi setup",
     "setup": "umi setup",
-    "start": "npm run dev"
+    "start": "umi dev --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.1",
