@@ -3,7 +3,7 @@ import userStore from '@/stores/userStore';
 
 const request = axios.create({
   //   baseURL: process.env.NODE_ENV === 'development'
-  baseURL: '/api',
+  baseURL: process.env.API_BASE_URL,
   timeout: 10000,
   withCredentials: false, // cookie
 });
