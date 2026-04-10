@@ -1,16 +1,14 @@
 package com.unimelb.swen90017.rfo.service.impl;
 
-import com.unimelb.swen90017.rfo.dao.GroupMarkDetailDao;
 import com.unimelb.swen90017.rfo.dao.GroupMarkRecordDao;
 import com.unimelb.swen90017.rfo.dao.MarkDetailDao;
 import com.unimelb.swen90017.rfo.dao.MarkRecordDao;
-import com.unimelb.swen90017.rfo.dao.ProjectDao;
+import com.unimelb.swen90017.rfo.pojo.dto.GroupStudentMarkDTO;
 import com.unimelb.swen90017.rfo.pojo.dto.MarkDetailDTO;
-import com.unimelb.swen90017.rfo.pojo.po.GroupMarkDetailPO;
 import com.unimelb.swen90017.rfo.pojo.po.GroupMarkRecordPO;
 import com.unimelb.swen90017.rfo.pojo.po.MarkDetailPO;
 import com.unimelb.swen90017.rfo.pojo.po.MarkRecordPO;
-import com.unimelb.swen90017.rfo.pojo.po.StudentPO;
+import com.unimelb.swen90017.rfo.pojo.vo.GroupMarkResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.SaveGroupMarkRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.SaveMarkRequestVO;
 import com.unimelb.swen90017.rfo.security.CustomUserDetails;
@@ -22,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.RoundingMode; // still used by calcTotalScore
+import java.time.LocalDateTime;
 import java.util.List;
+
 
 /**
  * Mark service implementation
@@ -41,26 +41,72 @@ public class MarkServiceImpl implements MarkService {
     @Autowired
     private GroupMarkRecordDao groupMarkRecordDao;
 
-    @Autowired
-    private GroupMarkDetailDao groupMarkDetailDao;
-
-    @Autowired
-    private ProjectDao projectDao;
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveMark(SaveMarkRequestVO request) {
-        // 1. Get markerId from JWT (current authenticated user)
-        CustomUserDetails currentUser = (CustomUserDetails) SecurityContextHolder
-                .getContext().getAuthentication().getPrincipal();
-        Long markerId = currentUser.getUserId();
+        Long markerId = getCurrentMarkerId();
 
-        // 2. Check if a mark_record already exists for this (projectId, studentId)
-        MarkRecordPO existing = markRecordDao.getByProjectAndStudent(
-                request.getProjectId(), request.getStudentId());
+        saveStudentMark(request.getProjectId(), request.getStudentId(), markerId, request.getDetails());
+    }
 
-        // 3. Validate each score does not exceed the criteria's maximum_mark
-        for (MarkDetailDTO detail : request.getDetails()) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveGroupMark(SaveGroupMarkRequestVO request) {
+        Long markerId = getCurrentMarkerId();
+
+        // Validate: every studentId in the request must belong to this group
+        List<Long> groupMemberIds = groupMarkRecordDao.getStudentIdsByGroupId(request.getGroupId());
+        for (GroupStudentMarkDTO student : request.getStudents()) {
+            if (!groupMemberIds.contains(student.getStudentId())) {
+                throw new IllegalArgumentException(
+                        "Student id=" + student.getStudentId()
+                        + " is not a member of group id=" + request.getGroupId());
+            }
+        }
+
+        // Save each student's group_score into mark_record
+        for (GroupStudentMarkDTO student : request.getStudents()) {
+            saveStudentGroupScore(request.getProjectId(), student.getStudentId(), markerId, student.getGroupScore());
+        }
+
+        // Save group comment into group_mark_record
+        saveGroupComment(request.getProjectId(), request.getGroupId(), request.getComment());
+
+        log.info("saveGroupMark complete: projectId={}, groupId={}, studentCount={}",
+                request.getProjectId(), request.getGroupId(), request.getStudents().size());
+    }
+
+    // -------------------------------------------------------------------------
+    @Override
+    public GroupMarkResponseVO getGroupMark(Long projectId, Long groupId) {
+        GroupMarkRecordPO groupMarkRecord = groupMarkRecordDao.getByProjectAndGroup(projectId, groupId);
+        String comment = groupMarkRecord != null ? groupMarkRecord.getComment() : null;
+
+        List<GroupStudentMarkDTO> students = groupMarkRecordDao.getStudentGroupScores(projectId, groupId);
+
+        return GroupMarkResponseVO.builder()
+                .projectId(projectId)
+                .groupId(groupId)
+                .comment(comment)
+                .students(students)
+                .build();
+    }
+
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Save or update mark record and details for a single student.
+     * Calculates and persists the student's total_score.
+     * Does NOT trigger group average recalculation (caller is responsible).
+     */
+    private void saveStudentMark(Long projectId, Long studentId, Long markerId, List<MarkDetailDTO> details) {
+        // 1. Validate: each score must not exceed the criteria's maximum_mark
+        for (MarkDetailDTO detail : details) {
             if (detail.getScore() == null) continue;
             Integer maxMark = markRecordDao.getMaximumMarkByCriteriaId(detail.getCriteriaId());
             if (maxMark != null && detail.getScore().compareTo(BigDecimal.valueOf(maxMark)) > 0) {
@@ -70,22 +116,25 @@ public class MarkServiceImpl implements MarkService {
             }
         }
 
+        // 2. Upsert mark_record
+        MarkRecordPO existing = markRecordDao.getByProjectAndStudent(projectId, studentId);
         Long markRecordId;
-
         if (existing != null) {
             markRecordId = existing.getId();
+            existing.setMarkerId(markerId);
+            markRecordDao.updateById(existing);
         } else {
             MarkRecordPO newRecord = MarkRecordPO.builder()
-                    .projectId(request.getProjectId())
-                    .studentId(request.getStudentId())
+                    .projectId(projectId)
+                    .studentId(studentId)
                     .markerId(markerId)
                     .build();
             markRecordDao.insert(newRecord);
             markRecordId = newRecord.getId();
         }
 
-        // 4. Upsert mark_detail rows
-        for (MarkDetailDTO detail : request.getDetails()) {
+        // 3. Upsert mark_detail rows (by criteriaId — supports partial/incremental saves)
+        for (MarkDetailDTO detail : details) {
             MarkDetailPO existingDetail = markDetailDao.getByCriteriaId(markRecordId, detail.getCriteriaId());
             if (existingDetail != null) {
                 MarkDetailPO updated = MarkDetailPO.builder()
@@ -108,141 +157,70 @@ public class MarkServiceImpl implements MarkService {
             }
         }
 
-        // 5. Recalculate total_score from ALL mark_details in DB (not just this request)
-        BigDecimal totalScore = calcTotalScoreFromDetails(markDetailDao.getByMarkRecordId(markRecordId));
+        // 4. Recalculate student total_score from all stored details (not just this batch)
+        BigDecimal totalScore = calcTotalScore(markDetailDao.getByMarkRecordId(markRecordId));
         MarkRecordPO toUpdate = markRecordDao.selectById(markRecordId);
         toUpdate.setTotalScore(totalScore);
+        toUpdate.setMarkTime(LocalDateTime.now());
         markRecordDao.updateById(toUpdate);
 
-        log.info("Saved mark record id={}, total_score={}", markRecordId, totalScore);
+        log.info("Saved student mark: projectId={}, studentId={}, markerId={}, total_score={}",
+                projectId, studentId, markerId, totalScore);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void saveGroupMark(SaveGroupMarkRequestVO request) {
-        CustomUserDetails currentUser = (CustomUserDetails) SecurityContextHolder
-                .getContext().getAuthentication().getPrincipal();
-        Long markerId = currentUser.getUserId();
-
-        // 1. Validate each score does not exceed the criteria's maximum_mark
-        for (MarkDetailDTO detail : request.getDetails()) {
-            if (detail.getScore() == null) continue;
-            Integer maxMark = markRecordDao.getMaximumMarkByCriteriaId(detail.getCriteriaId());
-            if (maxMark != null && detail.getScore().compareTo(BigDecimal.valueOf(maxMark)) > 0) {
-                throw new IllegalArgumentException(
-                        "Score " + detail.getScore() + " exceeds maximum mark " + maxMark
-                        + " for criteria id=" + detail.getCriteriaId());
-            }
+    /**
+     * Save or update group_score in mark_record for a single student.
+     * Does NOT touch total_score or mark_detail rows.
+     */
+    private void saveStudentGroupScore(Long projectId, Long studentId, Long markerId, BigDecimal groupScore) {
+        MarkRecordPO existing = markRecordDao.getByProjectAndStudent(projectId, studentId);
+        if (existing != null) {
+            existing.setMarkerId(markerId);
+            existing.setGroupScore(groupScore);
+            existing.setMarkTime(LocalDateTime.now());
+            markRecordDao.updateById(existing);
+        } else {
+            MarkRecordPO newRecord = MarkRecordPO.builder()
+                    .projectId(projectId)
+                    .studentId(studentId)
+                    .markerId(markerId)
+                    .groupScore(groupScore)
+                    .markTime(LocalDateTime.now())
+                    .build();
+            markRecordDao.insert(newRecord);
         }
 
-        // 2. Upsert group_mark_record
-        GroupMarkRecordPO existingGroupRecord = groupMarkRecordDao.getByProjectAndGroup(
-                request.getProjectId(), request.getGroupId());
+        log.info("Saved group score: projectId={}, studentId={}, groupScore={}", projectId, studentId, groupScore);
+    }
 
-        Long groupMarkRecordId;
-        if (existingGroupRecord != null) {
-            groupMarkRecordId = existingGroupRecord.getId();
+    /**
+     * Save or update the group-level comment in group_mark_record.
+     * Does NOT touch total_score.
+     */
+    private void saveGroupComment(Long projectId, Long groupId, String comment) {
+        GroupMarkRecordPO existing = groupMarkRecordDao.getByProjectAndGroup(projectId, groupId);
+        if (existing != null) {
+            existing.setComment(comment);
+            existing.setMarkTime(LocalDateTime.now());
+            groupMarkRecordDao.updateById(existing);
         } else {
             GroupMarkRecordPO newGroupRecord = GroupMarkRecordPO.builder()
-                    .projectId(request.getProjectId())
-                    .groupId(request.getGroupId())
-                    .markerId(markerId)
+                    .projectId(projectId)
+                    .groupId(groupId)
+                    .comment(comment)
+                    .markTime(LocalDateTime.now())
                     .build();
             groupMarkRecordDao.insert(newGroupRecord);
-            groupMarkRecordId = newGroupRecord.getId();
         }
 
-        // 3. Upsert group_mark_detail
-        for (MarkDetailDTO detail : request.getDetails()) {
-            GroupMarkDetailPO existingDetail = groupMarkDetailDao.getByCriteriaId(
-                    groupMarkRecordId, detail.getCriteriaId());
-            if (existingDetail != null) {
-                GroupMarkDetailPO updated = GroupMarkDetailPO.builder()
-                        .groupMarkRecordId(groupMarkRecordId)
-                        .criteriaId(detail.getCriteriaId())
-                        .score(detail.getScore())
-                        .comment(detail.getComment())
-                        .status(1)
-                        .build();
-                groupMarkDetailDao.updateGroupMarkDetail(updated);
-            } else {
-                GroupMarkDetailPO inserted = GroupMarkDetailPO.builder()
-                        .groupMarkRecordId(groupMarkRecordId)
-                        .criteriaId(detail.getCriteriaId())
-                        .score(detail.getScore())
-                        .comment(detail.getComment())
-                        .status(0)
-                        .build();
-                groupMarkDetailDao.insertGroupMarkDetail(inserted);
-            }
-        }
-
-        // 4. Recalculate total_score from ALL group_mark_details in DB
-        BigDecimal totalScore = calcTotalScoreFromGroupDetails(
-                groupMarkDetailDao.getByGroupMarkRecordId(groupMarkRecordId));
-        GroupMarkRecordPO groupToUpdate = groupMarkRecordDao.selectById(groupMarkRecordId);
-        groupToUpdate.setTotalScore(totalScore);
-        groupMarkRecordDao.updateById(groupToUpdate);
-
-        // 5. Distribute scores to each student in the group
-        List<StudentPO> students = projectDao.selectStudentsByGroupIdInProject(request.getGroupId());
-        for (StudentPO student : students) {
-            Long studentId = student.getId();
-
-            // Upsert mark_record for this student
-            MarkRecordPO existingRecord = markRecordDao.getByProjectAndStudent(
-                    request.getProjectId(), studentId);
-            Long markRecordId;
-            if (existingRecord != null) {
-                markRecordId = existingRecord.getId();
-            } else {
-                MarkRecordPO newRecord = MarkRecordPO.builder()
-                        .projectId(request.getProjectId())
-                        .studentId(studentId)
-                        .markerId(markerId)
-                        .build();
-                markRecordDao.insert(newRecord);
-                markRecordId = newRecord.getId();
-            }
-
-            // Upsert mark_detail for this student
-            for (MarkDetailDTO detail : request.getDetails()) {
-                MarkDetailPO existingDetail = markDetailDao.getByCriteriaId(
-                        markRecordId, detail.getCriteriaId());
-                if (existingDetail != null) {
-                    MarkDetailPO updated = MarkDetailPO.builder()
-                            .markRecordId(markRecordId)
-                            .criteriaId(detail.getCriteriaId())
-                            .score(detail.getScore())
-                            .comment(detail.getComment())
-                            .status(1)
-                            .build();
-                    markDetailDao.updateMarkDetail(updated);
-                } else {
-                    MarkDetailPO inserted = MarkDetailPO.builder()
-                            .markRecordId(markRecordId)
-                            .criteriaId(detail.getCriteriaId())
-                            .score(detail.getScore())
-                            .comment(detail.getComment())
-                            .status(0)
-                            .build();
-                    markDetailDao.insertMarkDetail(inserted);
-                }
-            }
-
-            // Recalculate total_score from ALL mark_details in DB for this student
-            BigDecimal studentTotalScore = calcTotalScoreFromDetails(
-                    markDetailDao.getByMarkRecordId(markRecordId));
-            MarkRecordPO studentToUpdate = markRecordDao.selectById(markRecordId);
-            studentToUpdate.setTotalScore(studentTotalScore);
-            markRecordDao.updateById(studentToUpdate);
-        }
-
-        log.info("Saved group mark record id={}, total_score={}, distributed to {} students",
-                groupMarkRecordId, totalScore, students.size());
+        log.info("Saved group comment: projectId={}, groupId={}", projectId, groupId);
     }
 
-    private BigDecimal calcTotalScoreFromDetails(List<MarkDetailPO> details) {
+    /**
+     * Calculate weighted total score from all mark_detail rows for a student.
+     * Formula: total = Σ(score × weighting / 100)
+     */
+    private BigDecimal calcTotalScore(List<MarkDetailPO> details) {
         BigDecimal total = BigDecimal.ZERO;
         for (MarkDetailPO detail : details) {
             if (detail.getScore() == null) continue;
@@ -256,17 +234,12 @@ public class MarkServiceImpl implements MarkService {
         return total;
     }
 
-    private BigDecimal calcTotalScoreFromGroupDetails(List<GroupMarkDetailPO> details) {
-        BigDecimal total = BigDecimal.ZERO;
-        for (GroupMarkDetailPO detail : details) {
-            if (detail.getScore() == null) continue;
-            Integer weighting = markRecordDao.getWeightingByCriteriaId(detail.getCriteriaId());
-            if (weighting != null) {
-                total = total.add(detail.getScore()
-                        .multiply(BigDecimal.valueOf(weighting))
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
-            }
-        }
-        return total;
+    /**
+     * Extract markerId from the current JWT-authenticated user.
+     */
+    private Long getCurrentMarkerId() {
+        CustomUserDetails currentUser = (CustomUserDetails) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+        return currentUser.getUserId();
     }
 }

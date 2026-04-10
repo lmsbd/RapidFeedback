@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Button, 
-  Typography, 
-  Form, 
-  InputNumber, 
-  Slider, 
+import {
+  Card,
+  Button,
+  Typography,
+  Form,
+  InputNumber,
+  Slider,
   Checkbox,
   Row,
   Col,
   Divider,
   message,
-  Spin
+  Spin,
 } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  MinusOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { Radio } from 'antd';
 import { history, useLocation } from 'umi';
 import { observer } from 'mobx-react-lite';
@@ -31,17 +36,17 @@ const WeightingInput = ({ value = 0, onChange }) => {
 
   return (
     <div className={styles.weightingInput}>
-      <InputNumber 
-        min={0} 
-        max={100} 
-        formatter={val => `${val}%`}
-        parser={val => val.replace('%', '')}
+      <InputNumber
+        min={0}
+        max={100}
+        formatter={(val) => `${val}%`}
+        parser={(val) => val.replace('%', '')}
         className={styles.numberInput}
         value={value}
         onChange={handleChange}
       />
-      <Slider 
-        min={0} 
+      <Slider
+        min={0}
         max={100}
         className={styles.sliderInput}
         value={value}
@@ -53,7 +58,7 @@ const WeightingInput = ({ value = 0, onChange }) => {
 
 const CriteriaEditor = observer(() => {
   const { assessmentStore } = useStores();
-  
+
   // State for template elements from backend
   const [elements, setElements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,10 +86,11 @@ const CriteriaEditor = observer(() => {
         setElements(response.data);
         // Set default values for each element
         const initialValues = {};
-        response.data.forEach(element => {
+        response.data.forEach((element) => {
           initialValues[`weighting_${element.id}`] = element.weighting || 0;
           initialValues[`maxMark_${element.id}`] = element.maximumMark || 10;
-          initialValues[`markIncrement_${element.id}`] = element.markIncrements || 0.5;
+          initialValues[`markIncrement_${element.id}`] =
+            element.markIncrements || 0.5;
         });
         form.setFieldsValue(initialValues);
       } else {
@@ -102,21 +108,21 @@ const CriteriaEditor = observer(() => {
   const syncWithAssessmentStore = () => {
     const selectedIds = new Set();
     const formValues = {};
-    
+
     // Process each element in assessmentStore
-    assessmentStore.elementList.forEach(storeElement => {
+    assessmentStore.elementList.forEach((storeElement) => {
       const elementId = storeElement.elementId;
       selectedIds.add(elementId);
-      
+
       // Set form values from store
       formValues[`weighting_${elementId}`] = storeElement.weighting;
       formValues[`maxMark_${elementId}`] = storeElement.maximumMark;
       formValues[`markIncrement_${elementId}`] = storeElement.markIncrements;
     });
-    
+
     // Update selected elements state
     setSelectedElements(selectedIds);
-    
+
     // Update form values
     form.setFieldsValue(formValues);
   };
@@ -133,6 +139,10 @@ const CriteriaEditor = observer(() => {
       newSelected.delete(elementId);
     }
     setSelectedElements(newSelected);
+    const names = Array.from(newSelected).map((id) => `weighting_${id}`);
+    if (names.length > 0) {
+      form.validateFields(names).catch(() => {});
+    }
   };
 
   const handleSave = () => {
@@ -141,40 +151,45 @@ const CriteriaEditor = observer(() => {
       return;
     }
 
-    form.validateFields().then(values => {
-      // Build the elements array in the specified format
-      const selectedElementsData = Array.from(selectedElements).map(elementId => {
-        const element = elements.find(e => e.id === elementId);
-        return {
-          elementId: elementId,
-          Name: element.name,
-          weighting: values[`weighting_${elementId}`],
-          maximumMark: values[`maxMark_${elementId}`],
-          markIncrements: values[`markIncrement_${elementId}`]
-        };
+    form
+      .validateFields()
+      .then((values) => {
+        // Build the elements array in the specified format
+        const selectedElementsData = Array.from(selectedElements).map(
+          (elementId) => {
+            const element = elements.find((e) => e.id === elementId);
+            return {
+              elementId: elementId,
+              Name: element.name,
+              weighting: values[`weighting_${elementId}`],
+              maximumMark: values[`maxMark_${elementId}`],
+              markIncrements: values[`markIncrement_${elementId}`],
+            };
+          }
+        );
+
+        // Save to assessmentStore
+        assessmentStore.setElements(selectedElementsData);
+
+        // Show success message and redirect back
+        message.success('Assessment criteria saved successfully');
+        history.back();
+      })
+      .catch((err) => {
+        console.error('Validation failed:', err);
+        message.error('Please fix all validation errors before saving');
       });
-      
-      // Save to assessmentStore
-      assessmentStore.setElements(selectedElementsData);
-      
-      // Show success message and redirect back
-      message.success('Assessment criteria saved successfully');
-      history.back();
-    }).catch(err => {
-      console.error('Validation failed:', err);
-      message.error('Please fix all validation errors before saving');
-    });
   };
 
   const validateWeightings = (_, value) => {
     // Calculate total weighting for selected elements only
     let totalWeighting = 0;
-    selectedElements.forEach(elementId => {
+    selectedElements.forEach((elementId) => {
       const fieldName = `weighting_${elementId}`;
       const fieldValue = form.getFieldValue(fieldName);
       totalWeighting += Number(fieldValue || 0);
     });
-    
+
     if (selectedElements.size > 0 && totalWeighting !== 100) {
       return Promise.reject('Total weighting must equal 100%');
     }
@@ -221,22 +236,34 @@ const CriteriaEditor = observer(() => {
           form={form}
           layout="vertical"
           className={styles.criteriaForm}
+          onValuesChange={() => {
+            const names = Array.from(selectedElements).map(
+              (id) => `weighting_${id}`
+            );
+            if (names.length > 0) {
+              form.validateFields(names).catch(() => {});
+            }
+          }}
         >
-          {elements.map(element => {
+          {elements.map((element) => {
             const isSelected = selectedElements.has(element.id);
             return (
-              <Card 
-                key={element.id} 
+              <Card
+                key={element.id}
                 className={`${styles.criteriaCard} ${!isSelected ? styles.unselected : ''}`}
               >
                 <div className={styles.criteriaHeader}>
-                  <Checkbox 
+                  <Checkbox
                     className={styles.criteriaCheckbox}
                     checked={isSelected}
-                    onChange={(e) => handleElementSelect(element.id, e.target.checked)}
+                    onChange={(e) =>
+                      handleElementSelect(element.id, e.target.checked)
+                    }
                   />
                   <div className={styles.criteriaNameDisplay}>
-                    <Title level={4} style={{ margin: 0 }}>{element.name}</Title>
+                    <Title level={4} style={{ margin: 0 }}>
+                      {element.name}
+                    </Title>
                   </div>
                 </div>
 
@@ -249,9 +276,12 @@ const CriteriaEditor = observer(() => {
                         <Form.Item
                           label="Weighting"
                           name={`weighting_${element.id}`}
+                          dependencies={Array.from(selectedElements).map(
+                            (id) => `weighting_${id}`
+                          )}
                           rules={[
                             { required: true, message: 'Required' },
-                            { validator: validateWeightings }
+                            { validator: validateWeightings },
                           ]}
                         >
                           <WeightingInput />
@@ -263,12 +293,12 @@ const CriteriaEditor = observer(() => {
                           name={`maxMark_${element.id}`}
                           rules={[{ required: true, message: 'Required' }]}
                         >
-                          <InputNumber 
-                            min={1} 
+                          <InputNumber
+                            min={1}
                             className={styles.numberInput}
                             controls={{
                               upIcon: <PlusOutlined />,
-                              downIcon: <MinusOutlined />
+                              downIcon: <MinusOutlined />,
                             }}
                           />
                         </Form.Item>

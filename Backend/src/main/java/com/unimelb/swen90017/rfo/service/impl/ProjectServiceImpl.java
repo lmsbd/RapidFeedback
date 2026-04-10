@@ -9,15 +9,17 @@ import java.util.List;
 import java.util.Map;
 
 import com.unimelb.swen90017.rfo.common.BusinessException;
+import com.unimelb.swen90017.rfo.pojo.constants.BaseConstants;
 import com.unimelb.swen90017.rfo.dao.GroupMarkDetailDao;
 import com.unimelb.swen90017.rfo.dao.GroupMarkRecordDao;
 import com.unimelb.swen90017.rfo.dao.MarkDetailDao;
 import com.unimelb.swen90017.rfo.dao.MarkRecordDao;
+import com.unimelb.swen90017.rfo.dao.StudentDao;
 import com.unimelb.swen90017.rfo.dao.StudentProjectDao;
-import com.unimelb.swen90017.rfo.dao.SubjectDao;
 import com.unimelb.swen90017.rfo.dao.ProjectDao;
 import com.unimelb.swen90017.rfo.pojo.dto.AssessmentCriteriaDTO;
 import com.unimelb.swen90017.rfo.pojo.dto.GroupDTO;
+import com.unimelb.swen90017.rfo.pojo.dto.MarkerStudentDTO;
 import com.unimelb.swen90017.rfo.pojo.po.*;
 import com.unimelb.swen90017.rfo.pojo.vo.*;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupAssessmentScoresResponseVO;
@@ -49,8 +51,6 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     @Autowired
     private StudentProjectDao studentProjectDao;
     @Autowired
-    private SubjectDao subjectDao;
-    @Autowired
     private MarkRecordDao markRecordDao;
     @Autowired
     private MarkDetailDao markDetailDao;
@@ -58,6 +58,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     private GroupMarkRecordDao groupMarkRecordDao;
     @Autowired
     private GroupMarkDetailDao groupMarkDetailDao;
+    @Autowired
+    private StudentDao studentDao;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -106,18 +108,31 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
 
         //4.判断是individual还是group
         if (projectType.equals("individual")) {
-            //直接存到student_project表
-            List<Long> studentIds = subjectDao.getStudentIdsBySubjectId(projectRequestVO.getSubjectId());
-            if (studentIds == null || studentIds.isEmpty()){
-                throw new RuntimeException("StudentIds is empty");
+            // 从 markerStudents 中获取每个学生及其对应的 marker
+            List<MarkerStudentDTO> markerStudents = projectRequestVO.getMarkerStudents();
+            if (markerStudents == null || markerStudents.isEmpty()) {
+                throw new RuntimeException("markerStudents is required for individual projects");
             }
-            for (Long studentId : studentIds) {
+            for (MarkerStudentDTO ms : markerStudents) {
+                // 前端传学号，转换为 student 表主键
+                StudentPO studentPO = studentDao.findByStudentId(ms.getStudentId());
+                if (studentPO == null) {
+                    throw new BusinessException(400, "Student not found with studentId: " + ms.getStudentId());
+                }
+                Long studentPk = studentPO.getId();
+                // 写入 student_project
                 StudentProjectPO sp = StudentProjectPO.builder()
-                        .studentId(studentId)
+                        .studentId(studentPk)
                         .subjectId(projectRequestVO.getSubjectId())
                         .projectId(projectId)
                         .build();
                 studentProjectDao.insert(sp);
+                // 写入 marker_student（每个 markerId 一行）
+                if (ms.getMarkerIds() != null) {
+                    for (Long markerId : ms.getMarkerIds()) {
+                        projectDao.insertMarkerStudent(projectId, studentPk, markerId);
+                    }
+                }
             }
         } else if (projectType.equals("group")) {
             for (GroupDTO groupDTO : projectRequestVO.getGroups()) {
@@ -126,17 +141,28 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                         .groupName(groupDTO.getGroupName())
                         .build();
                 projectDao.insertProjectGroup(projectGroupPO);
-                //获取groupId
                 Long groupId = projectGroupPO.getId();
-                //5.存入group_student表和student_project表
-                for (Long studentId : groupDTO.getStudentIds()) {
+                // 写入 marker_group（每个 markerId 一行）
+                if (groupDTO.getMarkerIds() != null) {
+                    for (Long markerId : groupDTO.getMarkerIds()) {
+                        projectDao.insertMarkerGroup(projectId, groupId, markerId);
+                    }
+                }
+                // 写入 group_student 和 student_project
+                for (Long rawStudentId : groupDTO.getStudentIds()) {
+                    // 前端传学号，转换为 student 表主键
+                    StudentPO studentPO = studentDao.findByStudentId(rawStudentId);
+                    if (studentPO == null) {
+                        throw new BusinessException(400, "Student not found with studentId: " + rawStudentId);
+                    }
+                    Long studentPk = studentPO.getId();
                     GroupStudentPO groupStudentPO = GroupStudentPO.builder()
                             .groupId(groupId)
-                            .studentId(studentId)
+                            .studentId(studentPk)
                             .build();
                     projectDao.insertGroupStudent(groupStudentPO);
                     StudentProjectPO studentProjectPO = StudentProjectPO.builder()
-                            .studentId(studentId)
+                            .studentId(studentPk)
                             .subjectId(projectRequestVO.getSubjectId())
                             .projectId(projectId)
                             .build();
@@ -155,6 +181,11 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
             projectDao.deleteAssessmentCriteria(templateId);
             projectDao.deleteStudentProject(projectId);
             projectDao.deleteUserProject(projectId);
+            projectDao.deleteMarkerStudent(projectId);
+            projectDao.deleteMarkerGroup(projectId);
+            projectDao.deleteMarkDetailByProjectId(projectId);
+            projectDao.deleteMarkRecordByProjectId(projectId);
+            projectDao.deleteGroupMarkRecordByProjectId(projectId);
             //查询project_group表中的Id，返回的是一个list，有多个id
             List<Long> GroupId = projectDao.getGroupIdByProjectId(projectId);
             projectDao.deleteProjectGroup(projectId);
@@ -287,29 +318,47 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     }
 
     @Override
-    public List<StudentResponseVO> getUnmarkedStudentList(Long projectId) {
-        log.info("Fetching UNMARKED student list via student_project, projectId={}", projectId);
-        //TODO
+    public List<StudentResponseVO> getUnmarkedStudentList(Long projectId, Long userId, Integer role) {
+        log.info("Fetching UNMARKED student list, projectId={}, userId={}, role={}", projectId, userId, role);
+        if (BaseConstants.USER_ROLE_MARKER.equals(role)) {
+            return projectDao.getUnmarkedStudentsByProjectIdAndMarker(projectId, userId);
+        }
         return projectDao.getUnmarkedStudentsByProjectId(projectId);
     }
 
     @Override
-    public List<StudentResponseVO> getMarkedStudentList(Long projectId) {
-        log.info("Fetching MARKED student list via student_project, projectId={}", projectId);
-        //TODO
-        return projectDao.getMarkedStudentsByProjectId(projectId);
+    public List<StudentResponseVO> getMarkedStudentList(Long projectId, Long userId, Integer role) {
+        log.info("Fetching MARKED student list, projectId={}, userId={}, role={}", projectId, userId, role);
+        if (BaseConstants.USER_ROLE_MARKER.equals(role)) {
+            return projectDao.getMarkedStudentsByProjectIdAndMarker(projectId, userId);
+        }
+        List<StudentResponseVO> students = projectDao.getMarkedStudentsByProjectId(projectId);
+        for (StudentResponseVO student : students) {
+            student.setMarkerScores(projectDao.getMarkerScoresByProjectAndStudent(projectId, student.getId()));
+        }
+        return students;
     }
 
     @Override
-    public List<GroupResponseVO> getUnmarkedGroupList(Long projectId) {
-        log.info("Fetching UNMARKED group list via project_group, projectId={}", projectId);
+    public List<GroupResponseVO> getUnmarkedGroupList(Long projectId, Long userId, Integer role) {
+        log.info("Fetching UNMARKED group list, projectId={}, userId={}, role={}", projectId, userId, role);
+        if (BaseConstants.USER_ROLE_MARKER.equals(role)) {
+            return projectDao.getUnmarkedGroupsByProjectIdAndMarker(projectId, userId);
+        }
         return projectDao.getUnmarkedGroupsByProjectId(projectId);
     }
 
     @Override
-    public List<GroupResponseVO> getMarkedGroupList(Long projectId) {
-        log.info("Fetching MARKED group list via project_group, projectId={}", projectId);
-        return projectDao.getMarkedGroupsByProjectId(projectId);
+    public List<GroupResponseVO> getMarkedGroupList(Long projectId, Long userId, Integer role) {
+        log.info("Fetching MARKED group list, projectId={}, userId={}, role={}", projectId, userId, role);
+        if (BaseConstants.USER_ROLE_MARKER.equals(role)) {
+            return projectDao.getMarkedGroupsByProjectIdAndMarker(projectId, userId);
+        }
+        List<GroupResponseVO> groups = projectDao.getMarkedGroupsByProjectId(projectId);
+        for (GroupResponseVO group : groups) {
+            group.setMarkerScores(projectDao.getMarkerScoresByProjectAndGroup(projectId, group.getId()));
+        }
+        return groups;
     }
 
     @Override
@@ -419,6 +468,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                 .projectType(projectPO.getProjectType() != null ? projectPO.getProjectType() : "group")
                 .groupId(groupPO.getId())
                 .groupName(groupPO.getGroupName())
+                .groupComment(groupMarkRecord != null ? groupMarkRecord.getComment() : null)
                 .description(Collections.singletonList(descWithScore))
                 .build();
     }

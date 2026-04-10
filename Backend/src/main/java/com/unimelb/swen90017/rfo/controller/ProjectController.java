@@ -132,14 +132,18 @@ public class ProjectController {
 
     @PostMapping("/getUnmarkedStudentList")
     public Result<List<StudentResponseVO>> getUnmarkedStudentList(
-        @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO) {
+        @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (projectStudentListRequestVO == null || projectStudentListRequestVO.getProjectId() == null) {
             throw new BusinessException(400, "projectId is required");
         }
         log.info("Get unmarked student list for project: {}", projectStudentListRequestVO);
         try {
-            List<StudentResponseVO> studentList =projectService.getUnmarkedStudentList(projectStudentListRequestVO.getProjectId());
+            List<StudentResponseVO> studentList = projectService.getUnmarkedStudentList(
+                    projectStudentListRequestVO.getProjectId(),
+                    userDetails.getUserId(),
+                    userDetails.getRole());
             return Result.success(studentList);
         } catch (Exception e) {
             log.error("Error while getting unmarked student list for project: {}", projectStudentListRequestVO, e);
@@ -149,14 +153,18 @@ public class ProjectController {
 
     @PostMapping("/getMarkedStudentList")
     public Result<List<StudentResponseVO>> getMarkedStudentList(
-            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO) {
+            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (projectStudentListRequestVO == null || projectStudentListRequestVO.getProjectId() == null) {
             throw new BusinessException(400, "projectId is required");
         }
         log.info("Get marked student list for project: {}", projectStudentListRequestVO);
         try {
-            List<StudentResponseVO> studentList =projectService.getMarkedStudentList(projectStudentListRequestVO.getProjectId());
+            List<StudentResponseVO> studentList = projectService.getMarkedStudentList(
+                    projectStudentListRequestVO.getProjectId(),
+                    userDetails.getUserId(),
+                    userDetails.getRole());
              return Result.success(studentList);
         } catch (Exception e) {
             log.error("Error while getting marked student list for project: {}", projectStudentListRequestVO, e);
@@ -166,14 +174,18 @@ public class ProjectController {
 
     @PostMapping("/getUnmarkedGroupList")
     public Result<List<GroupResponseVO>> getUnmarkedGroupList(
-            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO) {
+            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (projectStudentListRequestVO == null || projectStudentListRequestVO.getProjectId() == null) {
             throw new BusinessException(400, "projectId is required");
         }
         log.info("Get unmarked group list for project: {}", projectStudentListRequestVO);
         try {
-            List<GroupResponseVO> groupList = projectService.getUnmarkedGroupList(projectStudentListRequestVO.getProjectId());
+            List<GroupResponseVO> groupList = projectService.getUnmarkedGroupList(
+                    projectStudentListRequestVO.getProjectId(),
+                    userDetails.getUserId(),
+                    userDetails.getRole());
             return Result.success(groupList);
         } catch (Exception e) {
             log.error("Error while getting unmarked group list for project: {}", projectStudentListRequestVO, e);
@@ -183,14 +195,18 @@ public class ProjectController {
 
     @PostMapping("/getMarkedGroupList")
     public Result<List<GroupResponseVO>> getMarkedGroupList(
-            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO) {
+            @RequestBody ProjectStudentListRequestVO projectStudentListRequestVO,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (projectStudentListRequestVO == null || projectStudentListRequestVO.getProjectId() == null) {
             throw new BusinessException(400, "projectId is required");
         }
         log.info("Get marked group list for project: {}", projectStudentListRequestVO);
         try {
-            List<GroupResponseVO> groupList = projectService.getMarkedGroupList(projectStudentListRequestVO.getProjectId());
+            List<GroupResponseVO> groupList = projectService.getMarkedGroupList(
+                    projectStudentListRequestVO.getProjectId(),
+                    userDetails.getUserId(),
+                    userDetails.getRole());
             return Result.success(groupList);
         } catch (Exception e) {
             log.error("Error while getting marked group list for project: {}", projectStudentListRequestVO, e);

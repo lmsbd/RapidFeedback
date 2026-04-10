@@ -95,6 +95,10 @@ export default function MarkPage() {
   const studentName = rawStudentName ? decodeURIComponent(rawStudentName) : '';
   const groupName = rawGroupName ? decodeURIComponent(rawGroupName) : '';
 
+  const fromGroup = searchParams.get('fromGroup') === '1';
+  const returnGroupId = searchParams.get('returnGroupId') || '';
+  const returnGroupName = searchParams.get('returnGroupName') || '';
+
   const isIndividual = !!individualId;
   const targetId = isIndividual ? individualId : groupId;
   const targetName = isIndividual ? studentName : groupName;
@@ -311,7 +315,16 @@ export default function MarkPage() {
         : await saveGroupMark(payload);
       if (res?.code === 200) {
         message.success('Saved');
-        history.push(`/markedList/${numericProjectId}`);
+        if (fromGroup && returnGroupId) {
+          const returnParams = new URLSearchParams({
+            projectId: String(numericProjectId),
+            groupId: returnGroupId,
+            groupName: returnGroupName,
+          });
+          history.push(`/groupMark?${returnParams.toString()}`);
+        } else {
+          history.push(`/markedList/${numericProjectId}`);
+        }
       } else {
         message.error(res?.message || 'Failed to save');
       }
@@ -469,7 +482,14 @@ export default function MarkPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <BackButton text="Back" />
+        <BackButton
+          text="Back"
+          customPath={
+            fromGroup && returnGroupId
+              ? `/groupMark?projectId=${projectId}&groupId=${returnGroupId}&groupName=${encodeURIComponent(returnGroupName)}`
+              : undefined
+          }
+        />
         <div className={styles.headerMain}>
           <Title level={3} className={styles.title}>
             {detail?.projectName ? detail.projectName : 'Mark'}

@@ -48,6 +48,11 @@ public class MarkRecordPO {
     private BigDecimal totalScore;
 
     /**
+     * Group score from group_mark_record, nullable
+     */
+    private BigDecimal groupScore;
+
+    /**
      * Submission timestamp
      */
     private LocalDateTime markTime;

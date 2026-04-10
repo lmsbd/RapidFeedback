@@ -22,8 +22,8 @@ import {
 } from '@ant-design/icons';
 import { history, useLocation, useParams } from 'umi';
 import { observer } from 'mobx-react-lite';
-import { useStores } from '@/stores';
-import { createProject } from '@/apis/projects';
+import { useStores } from '../stores';
+import { createProject } from '../apis/projects';
 import styles from './createProject.module.less';
 
 const { Title, Text } = Typography;

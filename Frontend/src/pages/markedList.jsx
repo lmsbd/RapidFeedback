@@ -143,20 +143,23 @@ export default function MarkedList() {
 
   const handleOpenMarkPage = useCallback(
     (record, mode) => {
-      const params = new URLSearchParams({
-        projectId: String(projectId),
-        type: mode,
-      });
-
       if (isGroupProject) {
-        params.set('groupId', String(record.id));
-        params.set('groupName', record.name || 'Group');
+        const params = new URLSearchParams({
+          projectId: String(projectId),
+          groupId: String(record.id),
+          groupName: record.name || 'Group',
+          type: mode,
+        });
+        history.push(`/groupMark?${params.toString()}`);
       } else {
-        params.set('individualId', String(record.id));
-        params.set('studentName', getStudentName(record) || 'Student');
+        const params = new URLSearchParams({
+          projectId: String(projectId),
+          individualId: String(record.id),
+          studentName: getStudentName(record) || 'Student',
+          type: mode,
+        });
+        history.push(`/mark?${params.toString()}`);
       }
-
-      history.push(`/mark?${params.toString()}`);
     },
     [isGroupProject, projectId]
   );
@@ -279,12 +282,6 @@ export default function MarkedList() {
       {
         title: 'Group Name',
         dataIndex: 'name',
-      },
-      {
-        title: 'Total Score',
-        dataIndex: 'totalScore',
-        width: 120,
-        render: (v) => toScoreText(v),
       },
       {
         title: 'Action',

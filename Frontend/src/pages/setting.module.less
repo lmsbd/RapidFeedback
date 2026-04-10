@@ -1,0 +1,280 @@
+@import (reference) '@/styles/theme.less';
+
+.settingPage {
+  min-height: 100vh;
+  background: #f6f7f9;
+  padding: 0;
+}
+
+.mainContent {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 48px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 460px;
+
+  .fieldLabel {
+    width: 140px;
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .avatarCircle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #f2f2f2;
+    border: 2px solid #e4e4e4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 460px;
+
+  .fieldLabel {
+    width: 140px;
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .fieldValue {
+    flex: 1;
+    font-size: 15px;
+    color: #555;
+    padding: 8px 16px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    max-width: 320px;
+  }
+}
+
+.fieldInput {
+  flex: 1;
+  max-width: 320px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 15px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: @secondary-blue;
+  }
+
+  &:focus {
+    border-color: @secondary-blue;
+    box-shadow: 0 0 0 2px rgba(3, 15, 67, 0.1);
+  }
+}
+
+.changePasswordButton {
+  border-radius: 8px;
+  border: 1px solid @secondary-blue;
+  color: @secondary-blue;
+  font-weight: 500;
+  font-size: 14px;
+  height: 40px;
+  padding: 4px 20px;
+  transition: all 0.3s ease;
+}
+
+:global(.ant-btn).changePasswordButton:hover {
+  background-color: fade(@secondary-blue, 6%);
+  color: @secondary-blue;
+  border-color: @secondary-blue;
+  transform: translateY(-1px);
+}
+
+.actionRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+
+  .editButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 36px;
+    height: 42px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+
+  :global(.ant-btn).editButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+
+  :global(.ant-btn).editButton:focus-visible {
+    outline: 2px solid @secondary-blue;
+    outline-offset: 2px;
+  }
+}
+
+.editActionRow {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 12px;
+  width: 460px;
+
+  .cancelButton {
+    border-radius: 8px;
+    border: 1px solid @secondary-blue;
+    background: transparent;
+    padding: 8px 36px;
+    height: 42px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+  }
+
+  :global(.ant-btn).cancelButton:hover {
+    background-color: fade(@secondary-blue, 6%);
+    color: @secondary-blue;
+    border-color: @secondary-blue;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.15);
+  }
+
+  .saveButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 36px;
+    height: 42px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+
+  :global(.ant-btn).saveButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
+
+  :global(.ant-btn).saveButton:focus-visible,
+  :global(.ant-btn).cancelButton:focus-visible {
+    outline: 2px solid @secondary-blue;
+    outline-offset: 2px;
+  }
+}
+
+// Change Password Modal
+.pwdModal {
+  :global(.ant-modal-header) {
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 12px;
+  }
+}
+
+.pwdForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 8px;
+}
+
+.pwdField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pwdLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.pwdActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pwdSubmitButton {
+  background-color: @secondary-blue;
+  border: none;
+
+  &:hover {
+    background-color: fade(@secondary-blue, 85%) !important;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 24px 20px;
+  }
+
+  .avatarRow,
+  .fieldRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    .fieldLabel {
+      width: auto;
+    }
+
+    .fieldValue {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+}

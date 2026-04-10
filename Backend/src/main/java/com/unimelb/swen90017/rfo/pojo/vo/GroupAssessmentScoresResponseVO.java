@@ -20,5 +20,6 @@ public class GroupAssessmentScoresResponseVO {
     private String projectType;
     private Long groupId;
     private String groupName;
+    private String groupComment;
     private List<DescriptionWithScoreVO> description;
 }

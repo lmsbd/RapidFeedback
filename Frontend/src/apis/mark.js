@@ -7,3 +7,12 @@ export function saveMark(data) {
 export function saveGroupMark(data) {
   return request.post('/mark/saveGroupMark', data);
 }
+
+export function getGroupMark(projectId, groupId) {
+  return request.get('/mark/getGroupMark', {
+    params: {
+      projectId: Number(projectId),
+      groupId: Number(groupId),
+    },
+  });
+}

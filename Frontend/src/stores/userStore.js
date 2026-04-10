@@ -97,6 +97,13 @@ class UserStore {
     }
   }
 
+  updateProfile(userData) {
+    if (userData.username !== undefined) this.userName = userData.username;
+    if (userData.email !== undefined) this.email = userData.email;
+    if (userData.role !== undefined) this.role = userData.role;
+    this.saveToStorage();
+  }
+
   setSelected(ids) {
     this.selectedMarkerIds = ids;
   }

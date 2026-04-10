@@ -23,4 +23,16 @@ public interface MarkRecordDao extends BaseMapper<MarkRecordPO> {
 
     @Select("SELECT maximum_mark FROM assessment_criteria WHERE id = #{criteriaId}")
     Integer getMaximumMarkByCriteriaId(@Param("criteriaId") Long criteriaId);
+
+    /**
+     * Find the group_id of the group this student belongs to within a project.
+     * Returns null if the student is not in any group for this project.
+     */
+    @Select("SELECT gs.group_id FROM group_student gs " +
+            "JOIN project_group pg ON gs.group_id = pg.id " +
+            "WHERE gs.student_id = #{studentId} AND pg.project_id = #{projectId} " +
+            "AND (gs.delete_status = 0 OR gs.delete_status IS NULL) " +
+            "AND pg.delete_status = 0 LIMIT 1")
+    Long getGroupIdByStudentAndProject(@Param("studentId") Long studentId,
+                                       @Param("projectId") Long projectId);
 }

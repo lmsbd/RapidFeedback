@@ -8,26 +8,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-/**
- * Group mark record persistent object
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("group_mark_record")
-public class GroupMarkRecordPO {
-
+@TableName("marker_group")
+public class MarkerGroupPO {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
     private Long projectId;
-
     private Long groupId;
-
-    private String comment;
-
-    private LocalDateTime markTime;
+    private Long markerId;
 }

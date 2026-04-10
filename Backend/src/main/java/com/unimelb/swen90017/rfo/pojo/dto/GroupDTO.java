@@ -15,7 +15,12 @@ public class GroupDTO {
     private String groupName;
 
     /**
-     * Student IDs
+     * Student IDs (student.id primary keys)
      */
     private List<Long> studentIds;
+
+    /**
+     * List of user.id for assigned markers (supports multiple markers per group)
+     */
+    private List<Long> markerIds;
 }

@@ -11,8 +11,8 @@ import {
 import { UserAddOutlined, TagsOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { history } from 'umi';
 import { observer } from 'mobx-react-lite';
-import { useStores } from '@/stores';
-import { createSubject } from '@/apis/createSubject';
+import { useStores } from '../stores';
+import { createSubject } from '../apis/createSubject';
 import styles from './createSubject.module.less';
 
 const { TextArea } = Input;

@@ -2,6 +2,7 @@ package com.unimelb.swen90017.rfo.pojo.vo.request;
 
 import com.unimelb.swen90017.rfo.pojo.dto.AssessmentCriteriaDTO;
 import com.unimelb.swen90017.rfo.pojo.dto.GroupDTO;
+import com.unimelb.swen90017.rfo.pojo.dto.MarkerStudentDTO;
 import lombok.Data;
 
 import java.util.List;
@@ -32,9 +33,8 @@ public class ProjectRequestVO {
     private List<AssessmentCriteriaDTO> elements;
 
     /**
-     * Project groups
+     * Project groups (group projects only)
      */
-    //如果前端不传入group字段，默认gourp为null
     private List<GroupDTO> groups;
 
     /**
@@ -43,10 +43,15 @@ public class ProjectRequestVO {
     private String projectType;
 
     /**
-     * markerList
+     * All marker user.id for this project (written to user_project)
      */
     private List<Long> markerList;
 
+    /**
+     * Per-student marker assignments (individual projects only)
+     * Each entry contains a studentId (student.id PK) and a list of markerIds
+     */
+    private List<MarkerStudentDTO> markerStudents;
 }
 
 

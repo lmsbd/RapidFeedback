@@ -51,4 +51,9 @@ public class UserPO {
     @TableField("delete_status")
     private Integer deleteStatus;
 
+    /**
+     * User avatar URL
+     */
+    private String avatar;
+
 }

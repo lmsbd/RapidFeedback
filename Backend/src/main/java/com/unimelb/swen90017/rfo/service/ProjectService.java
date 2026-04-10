@@ -51,13 +51,13 @@ public interface ProjectService extends IService<ProjectPO> {
     */
    public List<GroupWithStudentResponseVO> getGroupsDetailByProjectId(Long projectId) throws Exception;
 
-   public List<StudentResponseVO> getUnmarkedStudentList(Long projectId);
+   public List<StudentResponseVO> getUnmarkedStudentList(Long projectId, Long userId, Integer role);
 
-   public List<StudentResponseVO> getMarkedStudentList(Long projectId);
+   public List<StudentResponseVO> getMarkedStudentList(Long projectId, Long userId, Integer role);
 
-   public List<GroupResponseVO> getUnmarkedGroupList(Long projectId);
+   public List<GroupResponseVO> getUnmarkedGroupList(Long projectId, Long userId, Integer role);
 
-   public List<GroupResponseVO> getMarkedGroupList(Long projectId);
+   public List<GroupResponseVO> getMarkedGroupList(Long projectId, Long userId, Integer role);
 
    void deleteProject(Long projectId);
 

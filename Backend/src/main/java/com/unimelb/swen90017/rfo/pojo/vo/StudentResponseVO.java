@@ -2,6 +2,7 @@ package com.unimelb.swen90017.rfo.pojo.vo;
 
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class StudentResponseVO {
@@ -34,4 +35,9 @@ public class StudentResponseVO {
      * total score, only returned for marked students
      */
     private BigDecimal totalScore;
+
+    /**
+     * per-marker scores, only populated for Admin role in getMarkedStudentList
+     */
+    private List<MarkerScoreVO> markerScores;
 }

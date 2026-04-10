@@ -3,11 +3,12 @@ import { Layout, Typography, Button, Dropdown, Menu } from 'antd';
 import { Link, Outlet, useLocation } from 'umi';
 import { observer } from 'mobx-react-lite';
 import {
-  UserOutlined,
   LogoutOutlined,
   SettingOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import userStore from '@/stores/userStore';
+import DefaultAvatar from '@/components/DefaultAvatar/DefaultAvatar';
 import styles from './MainLayout.module.css';
 
 const { Sider, Content } = Layout;
@@ -54,7 +55,7 @@ const MainLayout = observer(() => {
         {/* User Info */}
         <div className={styles.userBox}>
           <div className={styles.avatarPlaceholder}>
-            <UserOutlined style={{ fontSize: '24px', color: '#666' }} />
+            <DefaultAvatar name={userStore.userName} size={56} />
           </div>
           <div className={styles.userRight}>
             <Text className={styles.userName}>
@@ -65,7 +66,7 @@ const MainLayout = observer(() => {
               trigger={['click']}
               placement="topLeft"
             >
-              <Button className={styles.editLink}>Edit</Button>
+              <Button className={styles.editLink} onClick={handleLogout}>Logout</Button>
             </Dropdown>
           </div>
         </div>

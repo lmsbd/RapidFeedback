@@ -2,10 +2,13 @@ package com.unimelb.swen90017.rfo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.unimelb.swen90017.rfo.pojo.po.UserPO;
+import com.unimelb.swen90017.rfo.pojo.vo.UserProfileVO;
 import com.unimelb.swen90017.rfo.pojo.vo.UserResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.LoginRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.RegisterRequestVO;
+import com.unimelb.swen90017.rfo.pojo.vo.request.UpdatePasswordRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.AuthResponseVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -33,4 +36,18 @@ public interface UserService extends IService<UserPO> {
      * @return authentication response with token
      */
     void register(RegisterRequestVO registerRequest);
+
+    /**
+     * Update user profile (username only; email and role are immutable)
+     * @param userId   target user ID
+     * @param username new username
+     * @return updated user profile VO
+     */
+    UserProfileVO updateProfile(Long userId, String username);
+
+    /**
+     * Update user password
+     * @param request contains userId, oldPassword, newPassword
+     */
+    void updatePassword(UpdatePasswordRequestVO request);
 }

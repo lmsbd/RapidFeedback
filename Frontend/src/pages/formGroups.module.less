@@ -30,30 +30,11 @@
   margin-bottom: 10px;
   align-items: center;
 
-  .groupSizeContainer {
+  .importActions {
     display: flex;
     align-items: center;
     gap: 10px;
-    .randomButton {
-      border-radius: 8px;
-      background-color: @button-color;
-      border: none;
-      padding: 8px 20px;
-      height: 33px;
-      width: 130px;
-      font-weight: 600;
-      font-size: 16px;
-      color: @secondary-blue;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
-      margin-right: 20px;
-    }
-    :global(.ant-btn).randomButton:hover {
-      background-color: @button-color-hover;
-      color: @secondary-blue;
-      box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
-      transform: translateY(-1px);
-    }
+    flex-wrap: wrap;
   }
 }
 
@@ -86,7 +67,6 @@
   transform: translateY(-1px);
 }
 
-// 组容器样式
 .groupsContainer {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -94,7 +74,6 @@
   margin-bottom: 20px;
 }
 
-// 组卡片样式
 .groupCard {
   background: #fff;
   border-radius: 12px;
@@ -107,6 +86,24 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
   }
+  .manageButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 15px;
+    height: 33px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+  :global(.ant-btn).manageButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
 }
 
 // 组头部样式
@@ -114,9 +111,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 2px solid #f0f0f0;
+}
+
+.groupTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .groupName {
@@ -124,9 +130,13 @@
   font-size: 18px;
   font-weight: 600;
   color: #1890ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .studentCount {
+  flex-shrink: 0;
   background: #f6ffed;
   color: #52c41a;
   padding: 4px 8px;
@@ -144,6 +154,9 @@
 
 // 学生卡片样式
 .studentCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: #fafafa;
   border-radius: 8px;
   padding: 12px;
@@ -167,4 +180,50 @@
   font-size: 13px;
   color: #666;
   line-height: 1.4;
+}
+
+.manageSection {
+  margin-top: 20px;
+}
+
+.manageSectionTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.unGroupedList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.unGroupedEmpty {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.manageModalFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.manageModalFooterActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.addToGroupButton {
+  border-radius: 8px;
+  font-weight: 600;
 }
