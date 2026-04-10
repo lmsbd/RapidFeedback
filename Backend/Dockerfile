@@ -1,22 +1,16 @@
-# Use MySQL 8.0 official image
-FROM mysql:8.0
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 
-# Set environment variables
-ENV MYSQL_ROOT_PASSWORD=123456
-ENV MYSQL_DATABASE=rfo_db
-ENV MYSQL_USER=rfo_user
-ENV MYSQL_PASSWORD=rfo_password
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Set timezone to Melbourne
-ENV TZ=Australia/Melbourne
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+FROM eclipse-temurin:17-jre
 
-# Copy custom startup script
-COPY startup.sh /startup.sh
-RUN chmod +x /startup.sh
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 
-# Expose MySQL port (container listens on 3306)
-EXPOSE 3306
+RUN mkdir -p /app/uploads/avatars
 
-# Use custom startup script
-CMD ["/startup.sh"]
+EXPOSE 8080
+
+CMD ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
