@@ -92,6 +92,24 @@
   animation: fadeInUp 0.3s ease-out;
 }
 
+.projectTableHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+  margin: -24px -24px 0;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.headerCell {
+  text-align: center;
+  font-weight: 600;
+  color: #444;
+}
+
 .projectItem {
   padding: 16px 0;
   border-bottom: 1px solid #f0f0f0;
@@ -203,6 +221,10 @@
     grid-template-columns: 1fr;
     gap: 12px;
     text-align: center;
+  }
+
+  .projectTableHeader {
+    display: none;
   }
 }
 

@@ -28,6 +28,18 @@ import { makeAutoObservable, toJS } from 'mobx';
  *     { studentId: 2, studentName: 'Bob' },
  *     { studentId: 3, studentName: 'Charlie' },
  *   ],
+ * 
+ * {
+  groupId: team.id,              // 可选，team.id 存在才有
+  groupName: team.name ?? '',
+  markerIds: extractMarkerIds(team.markers), // number[]，来自 team.markers 的 id/userId
+  studentIds: students.map((s) => s.studentId),
+  students: students.map((s) => ({
+    ...s,                        // 保留原 students[] 的所有字段
+    studentName: `${s.firstName ?? ''} ${s.surname ?? ''}`.trim(),
+  })),
+}
+
  */
 
 /**

@@ -29,6 +29,9 @@ const SelectStudent = observer(() => {
   const params = new URLSearchParams(location.search);
   const isFromManage = params.get('fromManage') === 'true';
 
+  const isValidEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
@@ -46,12 +49,44 @@ const SelectStudent = observer(() => {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
+            let addedCount = 0;
+            let skippedMissingCount = 0;
+            let skippedInvalidEmailCount = 0;
+
             results.data.forEach((row) => {
-              if (row.studentId && row.email && row.firstName && row.surname) {
-                studentStore.addStudent(row);
-                // console.log(JSON.stringify(studentStore.students));
+              const studentId = String(row.studentId || '').trim();
+              const email = String(row.email || '').trim();
+              const firstName = String(row.firstName || '').trim();
+              const surname = String(row.surname || '').trim();
+
+              if (!studentId || !email || !firstName || !surname) {
+                skippedMissingCount += 1;
+                return;
               }
+
+              if (!isValidEmail(email)) {
+                skippedInvalidEmailCount += 1;
+                return;
+              }
+
+              studentStore.addStudent({
+                ...row,
+                studentId,
+                email,
+                firstName,
+                surname,
+              });
+              addedCount += 1;
             });
+
+            if (addedCount > 0) {
+              message.success(`Imported ${addedCount} student(s)`);
+            }
+            if (skippedMissingCount > 0 || skippedInvalidEmailCount > 0) {
+              message.warning(
+                `Skipped ${skippedMissingCount} row(s) with missing fields, ${skippedInvalidEmailCount} row(s) with invalid email`
+              );
+            }
           },
         });
       };
@@ -157,7 +192,14 @@ const SelectStudent = observer(() => {
           >
             <Input />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true }]}>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Please enter email' },
+              { type: 'email', message: 'Please enter a valid email address' },
+            ]}
+          >
             <Input />
           </Form.Item>
           <Form.Item

@@ -20,6 +20,7 @@ public class GroupAssessmentScoresResponseVO {
     private String projectType;
     private Long groupId;
     private String groupName;
-    private String groupComment;
+    /** Per-marker group comments. Empty list when no marker has written one. */
+    private List<GroupCommentVO> groupComments;
     private List<DescriptionWithScoreVO> description;
 }

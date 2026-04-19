@@ -22,6 +22,12 @@ public interface UserDao extends BaseMapper<UserPO> {
     @Select("SELECT id, username, role FROM user WHERE role = 2 AND delete_status = 0")
     List<UserPO> getAllMarkers();
 
+    /**
+     * Get all active admins (role = 1). Includes email for report distribution.
+     */
+    @Select("SELECT id, username, email, role FROM user WHERE role = 1 AND delete_status = 0")
+    List<UserPO> getAllAdmins();
+
     default UserPO selectByUsernameOrEmail(String username, String email) {
         LambdaQueryWrapper<UserPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(UserPO::getUsername, username);

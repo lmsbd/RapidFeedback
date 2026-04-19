@@ -12,9 +12,8 @@ import java.util.List;
  */
 @Data
 public class ProjectRequestVO {
-    /**
-     * Project name
-     */
+    private Long projectId;
+
     private String name;
 
     /**

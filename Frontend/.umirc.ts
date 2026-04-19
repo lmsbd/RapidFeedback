@@ -49,6 +49,10 @@ export default defineConfig({
           component: 'createProject',
         },
         {
+          path: '/:subjectId/editProject/:projectId',
+          component: 'editProject',
+        },
+        {
           path: '/setting',
           component: 'setting',
         },
@@ -57,7 +61,7 @@ export default defineConfig({
           component: 'markedList',
         },
         {
-          path: '/viewProject/:projectId',
+          path: '/:subjectId/viewProject/:projectId',
           component: 'viewProject',
         },
         {
@@ -67,6 +71,10 @@ export default defineConfig({
         {
           path: '/mark',
           component: 'mark',
+        },
+        {
+          path: '/finalMark/:projectId',
+          component: 'finalMark',
         },
         {
           path: '/:subjectId/formGroups',

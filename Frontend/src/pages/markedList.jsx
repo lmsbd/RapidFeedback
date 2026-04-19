@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, history, useLocation } from 'umi';
 import { Button, Card, Table, Typography, message, Empty } from 'antd';
-import { EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, AuditOutlined } from '@ant-design/icons';
 import BackButton from '../components/BackButton/BackButton';
 import styles from './markedList.module.less';
 
@@ -13,6 +13,7 @@ import {
 } from '../apis/getStudents';
 import { getProjectDetail } from '../apis/getProjectDetail';
 import subjectStore from '../stores/subjectStore';
+import userStore from '../stores/userStore';
 
 const { Title, Text } = Typography;
 
@@ -343,6 +344,7 @@ export default function MarkedList() {
             size="small"
             dataSource={members}
             columns={teamStudentColumns}
+            scroll={{ x: 'max-content' }}
             pagination={false}
           />
         );
@@ -381,6 +383,22 @@ export default function MarkedList() {
             ? `${subjectName} - ${projectInfo.name}`
             : 'Marked List'}
         </Title>
+        {String(userStore.role) === '1' && (
+          <Button
+            type="primary"
+            icon={<AuditOutlined />}
+            className={styles.saveButton}
+            onClick={() =>
+              history.push(`/finalMark/${projectId}`, {
+                projectName: projectInfo?.name || '',
+                projectType,
+                subjectName,
+              })
+            }
+          >
+            Final Mark
+          </Button>
+        )}
       </div>
 
       <div className={styles.mainContent}>
@@ -395,6 +413,7 @@ export default function MarkedList() {
               size="middle"
               dataSource={unmarked}
               columns={activeUnmarkedColumns}
+              scroll={{ x: 'max-content' }}
               pagination={{ pageSize: 8 }}
               loading={loading}
               expandable={isGroupProject ? groupExpandable : undefined}
@@ -418,6 +437,7 @@ export default function MarkedList() {
               size="middle"
               dataSource={marked}
               columns={activeMarkedColumns}
+              scroll={{ x: 'max-content' }}
               pagination={{ pageSize: 8 }}
               loading={loading}
               expandable={isGroupProject ? groupExpandable : undefined}

@@ -260,10 +260,8 @@ export default function MarkPage() {
 
     return rows.reduce((sum, r) => {
       const mark = Number(r.mark) || 0;
-      const maxMark = normalizeMax(r.maxMark);
       const weighting = Number(r.weighting) || 0;
-      const ratio = maxMark > 0 ? mark / maxMark : 0;
-      return sum + ratio * weighting;
+      return sum + (mark * weighting) / 100;
     }, 0);
   }, [rows]);
 

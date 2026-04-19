@@ -45,3 +45,23 @@ export function createProject(data) {
   
   return request.post('/projects/save', data);
 }
+
+/**
+ * Save project API (used by edit page)
+ * @param {object} data
+ * @returns {Promise}
+ */
+export function saveProject(data) {
+  return request.post('/projects/save', data);
+}
+
+/**
+ * Check whether marking has started for a project
+ * @param {number|string} projectId
+ * @returns {Promise<any>}
+ */
+export function hasMarkingStarted(projectId) {
+  return request.get('/projects/hasMarkingStarted', {
+    params: { projectId: Number(projectId) },
+  });
+}

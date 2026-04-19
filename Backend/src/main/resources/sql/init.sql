@@ -1,4 +1,8 @@
+Drop Database IF EXISTS rfo_db;
+-- Create database
+CREATE DATABASE IF NOT EXISTS rfo_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+USE rfo_db;
 
 -- ============================================
 -- User table
@@ -483,23 +487,82 @@ CREATE TABLE IF NOT EXISTS mark_detail
 
 -- Insert test data for mark_record
 -- project 9 (Software Engineering Project, template_id=1): Iris(id=9), Jack(id=10), Henry(id=8)
--- marker3=user_id=4, marker4=user_id=5
+-- marker3=user_id=4, marker4=user_id=5 (both markers score the same students)
 INSERT IGNORE INTO mark_record (id, project_id, student_id, marker_id, total_score, mark_time)
 VALUES
-    (1, 9, 9, 4, 76.75, '2025-10-01 10:00:00'),  -- Iris, submitted
-    (2, 9, 10, 4, NULL,  NULL);                    -- Jack, saved (Henry has no record = unmarked)
+    -- marker3 scores Iris: submitted
+    -- total = 80*15% + 75*15% + 90*15% + 70*20% + 75*20% + 80*10% + 60*5% = 76.75
+    (1, 9, 9, 4, 76.75, '2025-10-01 10:00:00'),
+    -- marker3 scores Jack: saved (not submitted yet)
+    (2, 9, 10, 4, NULL,  NULL),
+    -- marker3 scores Henry: submitted
+    -- total = 78*15% + 82*15% + 80*15% + 75*20% + 85*20% + 72*10% + 80*5% = 79.20
+    (3, 9, 8, 4, 79.20, '2025-10-01 10:30:00'),
+    -- marker4 scores Iris: submitted (different score from marker3)
+    -- total = 85*15% + 80*15% + 70*15% + 85*20% + 80*20% + 75*10% + 70*5% = 79.25
+    (4, 9, 9, 5, 79.25, '2025-10-01 11:00:00'),
+    -- marker4 scores Jack: submitted
+    -- total = 72*15% + 68*15% + 75*15% + 70*20% + 65*20% + 70*10% + 65*5% = 69.50
+    (5, 9, 10, 5, 69.50, '2025-10-01 11:15:00'),
+    -- marker4 scores Henry: submitted
+    -- total = 80*15% + 78*15% + 85*15% + 80*20% + 82*20% + 75*10% + 75*5% = 80.10
+    (6, 9, 8, 5, 80.10, '2025-10-01 11:30:00');
 
--- Insert test data for mark_detail (for mark_record id=1, template_id=1, criteria id=1~7)
--- total_score = 80*15% + 75*15% + 90*15% + 70*20% + 75*20% + 80*10% + 60*5% = 76.75
+-- Insert test data for mark_detail (template_id=1, criteria id=1~7)
+-- mark_record id=1: marker3 scores Iris
 INSERT IGNORE INTO mark_detail (mark_record_id, criteria_id, score, comment, status)
 VALUES
-    (1, 1, 80.0, 'Good vocal delivery', 1),   -- Voice, Pace and Confidence
-    (1, 2, 75.0, '', 1),                       -- Presentation Structure
-    (1, 3, 90.0, 'Clear slides', 1),           -- Quality of Slides/Visual Aids
-    (1, 4, 70.0, '', 1),                       -- Knowledge of the Material
-    (1, 5, 75.0, '', 1),                       -- Content
-    (1, 6, 80.0, '', 1),                       -- Concluding Remarks
-    (1, 7, 60.0, '', 1);                       -- Other Comments
+    (1, 1, 80.0, 'Good vocal delivery', 1),
+    (1, 2, 75.0, '', 1),
+    (1, 3, 90.0, 'Clear slides', 1),
+    (1, 4, 70.0, '', 1),
+    (1, 5, 75.0, '', 1),
+    (1, 6, 80.0, '', 1),
+    (1, 7, 60.0, '', 1);
+
+-- mark_record id=3: marker3 scores Henry
+INSERT IGNORE INTO mark_detail (mark_record_id, criteria_id, score, comment, status)
+VALUES
+    (3, 1, 78.0, 'Clear and steady pace', 1),
+    (3, 2, 82.0, 'Well-structured presentation', 1),
+    (3, 3, 80.0, '', 1),
+    (3, 4, 75.0, 'Solid understanding of the topic', 1),
+    (3, 5, 85.0, 'Comprehensive coverage', 1),
+    (3, 6, 72.0, '', 1),
+    (3, 7, 80.0, '', 1);
+
+-- mark_record id=4: marker4 scores Iris (same student as id=1, different marker)
+INSERT IGNORE INTO mark_detail (mark_record_id, criteria_id, score, comment, status)
+VALUES
+    (4, 1, 85.0, 'Excellent confidence and clarity', 1),
+    (4, 2, 80.0, 'Good logical flow', 1),
+    (4, 3, 70.0, 'Slides could use more visuals', 1),
+    (4, 4, 85.0, 'Demonstrates deep understanding', 1),
+    (4, 5, 80.0, '', 1),
+    (4, 6, 75.0, '', 1),
+    (4, 7, 70.0, '', 1);
+
+-- mark_record id=5: marker4 scores Jack
+INSERT IGNORE INTO mark_detail (mark_record_id, criteria_id, score, comment, status)
+VALUES
+    (5, 1, 72.0, 'Speaking too quickly at times', 1),
+    (5, 2, 68.0, 'Lacks clear structure', 1),
+    (5, 3, 75.0, '', 1),
+    (5, 4, 70.0, '', 1),
+    (5, 5, 65.0, 'Content is too shallow', 1),
+    (5, 6, 70.0, '', 1),
+    (5, 7, 65.0, 'Needs improvement', 1);
+
+-- mark_record id=6: marker4 scores Henry (same student as id=3, different marker)
+INSERT IGNORE INTO mark_detail (mark_record_id, criteria_id, score, comment, status)
+VALUES
+    (6, 1, 80.0, '', 1),
+    (6, 2, 78.0, 'Good structure overall', 1),
+    (6, 3, 85.0, 'Effective use of diagrams', 1),
+    (6, 4, 80.0, '', 1),
+    (6, 5, 82.0, 'Excellent use of examples', 1),
+    (6, 6, 75.0, '', 1),
+    (6, 7, 75.0, '', 1);
 
 
 -- ============================================
@@ -510,20 +573,22 @@ CREATE TABLE IF NOT EXISTS group_mark_record
     id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'Group mark record ID',
     project_id  BIGINT       NOT NULL COMMENT 'Linked project ID',
     group_id    BIGINT       NOT NULL COMMENT 'Linked project_group ID',
-    comment     TEXT         COMMENT 'Overall comment for the whole group from the marker',
+    marker_id   BIGINT       NOT NULL COMMENT 'user.id of the marker who wrote this group comment',
+    comment     TEXT         COMMENT 'Overall comment for the whole group from this marker',
     mark_time   DATETIME     COMMENT 'Last updated timestamp',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_project_group (project_id, group_id)
+    UNIQUE KEY uk_project_group_marker (project_id, group_id, marker_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT = 'Group mark record table';
 
 -- Insert test data for group_mark_record
 -- project 9 (Software Engineering Project): SE Team Alpha (group_id=16)
-INSERT IGNORE INTO group_mark_record (id, project_id, group_id, comment, mark_time)
+INSERT IGNORE INTO group_mark_record (id, project_id, group_id, marker_id, comment, mark_time)
 VALUES
-    (1, 9, 16, 'Good team collaboration overall.', '2025-10-01 10:00:00');  -- SE Team Alpha
+    (1, 9, 16, 4, 'Good team collaboration overall.', '2025-10-01 10:00:00'),  -- SE Team Alpha, Marker3
+    (2, 9, 16, 5, 'Clear documentation, could improve on testing coverage.', '2025-10-01 10:05:00');  -- SE Team Alpha, Marker4
 
 -- ============================================
 -- Marker-student assignment table (per-student marker for individual projects)
@@ -550,3 +615,20 @@ CREATE TABLE IF NOT EXISTS marker_group
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT = 'Marker-group assignment table';
+
+-- ============================================
+-- Final mark table (admin-set final scores)
+-- ============================================
+CREATE TABLE IF NOT EXISTS final_mark
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'Final mark ID',
+    project_id  BIGINT       NOT NULL COMMENT 'Linked project ID',
+    student_id  BIGINT       DEFAULT NULL COMMENT 'student.id for individual projects',
+    group_id    BIGINT       DEFAULT NULL COMMENT 'project_group.id for group projects',
+    final_score DECIMAL(6,2) DEFAULT NULL COMMENT 'Admin-set final score',
+    is_locked   TINYINT      NOT NULL DEFAULT 0 COMMENT '0=unlocked, 1=locked',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT = 'Admin final mark table';

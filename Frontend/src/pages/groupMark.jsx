@@ -57,10 +57,8 @@ function calcTotalScore(assessments) {
   }
   return assessments.reduce((sum, a) => {
     const score = Number(a.score) || 0;
-    const maxMark = Number(a.maxMark) || 100;
     const weighting = Number(a.weighting) || 0;
-    const ratio = maxMark > 0 ? score / maxMark : 0;
-    return sum + ratio * weighting;
+    return sum + (score * weighting) / 100;
   }, 0);
 }
 

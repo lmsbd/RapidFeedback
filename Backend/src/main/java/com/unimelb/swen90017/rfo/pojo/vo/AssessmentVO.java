@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class AssessmentVO {
     private Long criteriaId;
+    private Long elementId;
     private String name;
     private Integer weighting;
     private Integer maxMark;

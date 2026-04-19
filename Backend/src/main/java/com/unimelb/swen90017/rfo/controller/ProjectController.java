@@ -11,9 +11,11 @@ import com.unimelb.swen90017.rfo.pojo.vo.TemplateElementVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupWithStudentResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupAssessmentScoresResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupResponseVO;
+import com.unimelb.swen90017.rfo.pojo.vo.SendReportResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.StudentAssessmentScoresResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectStudentListRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.GroupAssessmentScoresRequestVO;
+import com.unimelb.swen90017.rfo.pojo.vo.request.SendReportRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.StudentAssessmentScoresRequestVO;
 
 import com.unimelb.swen90017.rfo.security.CustomUserDetails;
@@ -44,14 +46,10 @@ public class ProjectController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/save")
     public Result save(@RequestBody ProjectRequestVO projectRequestVO,@AuthenticationPrincipal CustomUserDetails userDetails){
-        log.info("Save subject: {}",projectRequestVO);
+        log.info("Save project: {}",projectRequestVO);
         Long userId = userDetails.getUserId();
-        try {
-            projectService.save(projectRequestVO, userId);
-            return Result.success();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        projectService.save(projectRequestVO, userId);
+        return Result.success();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -75,6 +73,16 @@ public class ProjectController {
         log.info("Get project by id: {}", projectId);
         ProjectResponseVO projectResponseVO = projectService.getProjectById(projectId);
         return Result.success(projectResponseVO);
+    }
+
+    @GetMapping("/hasMarkingStarted")
+    public Result<Boolean> hasMarkingStarted(@RequestParam Long projectId){
+        if(projectId == null){
+            throw new BusinessException(400, "Project ID is required");
+        }
+        log.info("Check whether marking has started for project: {}", projectId);
+        boolean started = projectService.hasMarkingStarted(projectId);
+        return Result.success(started);
     }
 
     @GetMapping("/getProjectDetail")
@@ -112,7 +120,7 @@ public class ProjectController {
         if (BaseConstants.USER_ROLE_MARKER.equals(userDetails.getRole())) {
             projectResponseVOList = projectService.getProjectsBySubjectIdAndMarkerId(id, userDetails.getUserId());
         } else {
-            projectResponseVOList = projectService.getProjectsBySubjectId(id);
+            projectResponseVOList = projectService.getProjectsBySubjectId(id, userDetails.getUserId());
         }
         return Result.success(projectResponseVOList);
     }
@@ -216,13 +224,14 @@ public class ProjectController {
 
     @PostMapping("/getStudentAssessmentScores")
     public Result<StudentAssessmentScoresResponseVO> getStudentAssessmentScores(
-            @RequestBody StudentAssessmentScoresRequestVO requestVO) {
+            @RequestBody StudentAssessmentScoresRequestVO requestVO,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("Get student assessment scores: {}", requestVO);
         if (requestVO.getProjectId() == null || requestVO.getStudentId() == null) {
             throw new BusinessException(400, "projectId and studentId are required");
         }
         StudentAssessmentScoresResponseVO vo = projectService.getStudentAssessmentScores(
-                requestVO.getProjectId(), requestVO.getStudentId());
+                requestVO.getProjectId(), requestVO.getStudentId(), userDetails.getUserId());
         return Result.success(vo);
     }
 
@@ -236,6 +245,16 @@ public class ProjectController {
         GroupAssessmentScoresResponseVO vo = projectService.getGroupAssessmentScores(
                 requestVO.getProjectId(), requestVO.getGroupId());
         return Result.success(vo);
+    }
+
+    @PostMapping("/sendReport")
+    public Result<SendReportResponseVO> sendReport(@RequestBody SendReportRequestVO requestVO) {
+        if (requestVO.getProjectId() == null) {
+            throw new BusinessException(400, "Project ID is required");
+        }
+        log.info("Send report for project: {}", requestVO.getProjectId());
+        SendReportResponseVO vo = projectService.sendReport(requestVO.getProjectId());
+        return Result.success("Sending reports to " + vo.getTotalStudents() + " students", vo);
     }
 
 }

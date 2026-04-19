@@ -19,5 +19,13 @@ public interface StudentDao extends BaseMapper<StudentPO> {
      */
     @Select("SELECT * FROM student WHERE student_id = #{studentId} AND delete_status = 0 LIMIT 1")
     StudentPO findByStudentId(@Param("studentId") Long studentId);
+
+    /**
+     * Find a student by primary key (student.id).
+     * Use this when looking up by the PK stored in mark_record.student_id / group_student.student_id,
+     * not by the business student number (student.student_id).
+     */
+    @Select("SELECT * FROM student WHERE id = #{id} AND delete_status = 0 LIMIT 1")
+    StudentPO findById(@Param("id") Long id);
 }
 

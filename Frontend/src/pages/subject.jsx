@@ -39,7 +39,7 @@ const Subject = observer(() => {
   return (
     <div className={styles.subjectPage}>
       {/* Header */}
-      <DashboardHeader title="Subject" />
+      <DashboardHeader title="Subject List" />
       {/* Main Content */}
       <div className={styles.mainContent}>
         <div className={styles.contentHeader}>

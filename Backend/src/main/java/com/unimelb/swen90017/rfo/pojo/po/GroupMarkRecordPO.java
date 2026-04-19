@@ -27,6 +27,9 @@ public class GroupMarkRecordPO {
 
     private Long groupId;
 
+    /** user.id of the marker who wrote this group comment */
+    private Long markerId;
+
     private String comment;
 
     private LocalDateTime markTime;

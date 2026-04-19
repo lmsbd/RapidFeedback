@@ -45,8 +45,8 @@ const selectMarker = observer(() => {
 
   const rowSelection = {
     selectedRowKeys: markerStore.selectedMarkerIds,
-    onChange: (selectedRowKeys) => {
-      markerStore.setSelected(selectedRowKeys);
+    onChange: (selectedRowKeys, selectedRows) => {
+      markerStore.setSelectedWithDetails(selectedRows);
       //   console.log(JSON.stringify(markerStore.selectedMarkerIds));
     },
   };
@@ -55,6 +55,14 @@ const selectMarker = observer(() => {
     if (markerStore.selectedMarkerIds.length === 0) {
       message.warning('Please select at least one marker');
       return;
+    }
+
+    const selectedIdSet = new Set(markerStore.selectedMarkerIds);
+    const selectedRows = (Array.isArray(data) ? data : []).filter((row) =>
+      selectedIdSet.has(row?.userId ?? row?.id)
+    );
+    if (selectedRows.length > 0) {
+      markerStore.setSelectedWithDetails(selectedRows);
     }
 
     const params = new URLSearchParams(location.search);

@@ -18,7 +18,7 @@ request.interceptors.request.use(
       'Content-Type': 'application/json',
     };
 
-    // 添加 token
+    
     if (userStore.token) {
       config.headers.Authorization = `Bearer ${userStore.token}`;
     }

@@ -1,0 +1,161 @@
+@import (reference) '@/styles/theme.less';
+
+.detailsPage {
+  min-height: 100vh;
+  background: white;
+  padding: 24px;
+}
+
+// ========== Header ==========
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  .pageTitle {
+    color: @primary-blue;
+    margin: 0 !important;
+    font-weight: 600;
+    flex: 1;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.lockAllButton {
+  height: 40px;
+  border-radius: 8px;
+  background-color: @button-color;
+  border: none;
+  padding: 8px 20px;
+  color: @secondary-blue;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+}
+
+:global(.ant-btn).lockAllButton:hover {
+  background-color: @button-color-hover;
+  color: @secondary-blue;
+  box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+  transform: translateY(-1px);
+}
+
+.publishButton {
+  height: 40px;
+  border-radius: 8px;
+  background-color: @secondary-blue;
+  border: none;
+  padding: 8px 20px;
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+}
+
+:global(.ant-btn).publishButton:hover:not(:disabled) {
+  background-color: @primary-blue;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+  transform: translateY(-1px);
+}
+
+:global(.ant-btn).publishButton:disabled {
+  background-color: #d9d9d9;
+  color: #999;
+  box-shadow: none;
+}
+
+// ========== Main Content ==========
+.mainContent {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+// ========== Card Section ==========
+.tableCard {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+  background: #fff;
+
+  :global {
+    .ant-card-head-title {
+      font-weight: 600;
+      color: @primary-blue;
+    }
+
+    .ant-table-thead > tr > th {
+      background-color: #f8f9fc;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: #fafafa;
+    }
+
+    .ant-table {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  }
+}
+
+// ========== Score Cells ==========
+.averageScore {
+  font-weight: 600;
+  color: @secondary-blue;
+}
+
+// ========== Action Buttons ==========
+.actionButton {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.saveBtn {
+  color: @secondary-blue;
+}
+
+.lockBtn {
+  color: #52c41a;
+}
+
+.unlockBtn {
+  color: #faad14;
+}
+
+// ========== Responsive ==========
+@media (max-width: 768px) {
+  .detailsPage {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .pageTitle {
+      font-size: 20px;
+    }
+  }
+}
+
+// ========== Animation ==========
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

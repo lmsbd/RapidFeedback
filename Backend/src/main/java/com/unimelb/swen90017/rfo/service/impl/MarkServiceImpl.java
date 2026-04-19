@@ -73,8 +73,8 @@ public class MarkServiceImpl implements MarkService {
             saveStudentGroupScore(request.getProjectId(), student.getStudentId(), markerId, student.getGroupScore());
         }
 
-        // Save group comment into group_mark_record
-        saveGroupComment(request.getProjectId(), request.getGroupId(), request.getComment());
+        // Save group comment into group_mark_record (per-marker row)
+        saveGroupComment(request.getProjectId(), request.getGroupId(), markerId, request.getComment());
 
         log.info("saveGroupMark complete: projectId={}, groupId={}, studentCount={}",
                 request.getProjectId(), request.getGroupId(), request.getStudents().size());
@@ -83,7 +83,8 @@ public class MarkServiceImpl implements MarkService {
     // -------------------------------------------------------------------------
     @Override
     public GroupMarkResponseVO getGroupMark(Long projectId, Long groupId) {
-        GroupMarkRecordPO groupMarkRecord = groupMarkRecordDao.getByProjectAndGroup(projectId, groupId);
+        Long markerId = getCurrentMarkerId();
+        GroupMarkRecordPO groupMarkRecord = groupMarkRecordDao.getByProjectGroupAndMarker(projectId, groupId, markerId);
         String comment = groupMarkRecord != null ? groupMarkRecord.getComment() : null;
 
         List<GroupStudentMarkDTO> students = groupMarkRecordDao.getStudentGroupScores(projectId, groupId);
@@ -116,13 +117,11 @@ public class MarkServiceImpl implements MarkService {
             }
         }
 
-        // 2. Upsert mark_record
-        MarkRecordPO existing = markRecordDao.getByProjectAndStudent(projectId, studentId);
+        // 2. Upsert mark_record — scoped to this marker to avoid overwriting other markers' records
+        MarkRecordPO existing = markRecordDao.getByProjectAndStudentAndMarker(projectId, studentId, markerId);
         Long markRecordId;
         if (existing != null) {
             markRecordId = existing.getId();
-            existing.setMarkerId(markerId);
-            markRecordDao.updateById(existing);
         } else {
             MarkRecordPO newRecord = MarkRecordPO.builder()
                     .projectId(projectId)
@@ -173,9 +172,9 @@ public class MarkServiceImpl implements MarkService {
      * Does NOT touch total_score or mark_detail rows.
      */
     private void saveStudentGroupScore(Long projectId, Long studentId, Long markerId, BigDecimal groupScore) {
-        MarkRecordPO existing = markRecordDao.getByProjectAndStudent(projectId, studentId);
+        // Scoped to this marker to avoid overwriting other markers' records
+        MarkRecordPO existing = markRecordDao.getByProjectAndStudentAndMarker(projectId, studentId, markerId);
         if (existing != null) {
-            existing.setMarkerId(markerId);
             existing.setGroupScore(groupScore);
             existing.setMarkTime(LocalDateTime.now());
             markRecordDao.updateById(existing);
@@ -194,11 +193,11 @@ public class MarkServiceImpl implements MarkService {
     }
 
     /**
-     * Save or update the group-level comment in group_mark_record.
-     * Does NOT touch total_score.
+     * Save or update this marker's group-level comment in group_mark_record.
+     * One row per (projectId, groupId, markerId); does NOT touch total_score.
      */
-    private void saveGroupComment(Long projectId, Long groupId, String comment) {
-        GroupMarkRecordPO existing = groupMarkRecordDao.getByProjectAndGroup(projectId, groupId);
+    private void saveGroupComment(Long projectId, Long groupId, Long markerId, String comment) {
+        GroupMarkRecordPO existing = groupMarkRecordDao.getByProjectGroupAndMarker(projectId, groupId, markerId);
         if (existing != null) {
             existing.setComment(comment);
             existing.setMarkTime(LocalDateTime.now());
@@ -207,13 +206,14 @@ public class MarkServiceImpl implements MarkService {
             GroupMarkRecordPO newGroupRecord = GroupMarkRecordPO.builder()
                     .projectId(projectId)
                     .groupId(groupId)
+                    .markerId(markerId)
                     .comment(comment)
                     .markTime(LocalDateTime.now())
                     .build();
             groupMarkRecordDao.insert(newGroupRecord);
         }
 
-        log.info("Saved group comment: projectId={}, groupId={}", projectId, groupId);
+        log.info("Saved group comment: projectId={}, groupId={}, markerId={}", projectId, groupId, markerId);
     }
 
     /**

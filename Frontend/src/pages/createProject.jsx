@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Form,
   Input,
@@ -9,6 +9,7 @@ import {
   message,
   Tag,
   Empty,
+  Select,
 } from 'antd';
 import {
   ClockCircleOutlined,
@@ -20,13 +21,42 @@ import {
   EditOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { history, useLocation, useParams } from 'umi';
+import { history, useParams } from 'umi';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../stores';
 import { createProject } from '../apis/projects';
+import { getStudentListBySubject } from '../apis/getStudents';
+import { getAllMarkers } from '../apis/getAllMarkers';
+import MarkerAssignmentPanel from '../components/MarkerAssignmentPanel/MarkerAssignmentPanel';
 import styles from './createProject.module.less';
 
 const { Title, Text } = Typography;
+
+function normalizeId(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : value;
+}
+
+function normalizeIdList(values) {
+  if (!Array.isArray(values)) return [];
+  return Array.from(new Set(values.map((v) => normalizeId(v))));
+}
+
+function getStudentDisplayName(student) {
+  if (student?.studentName) return student.studentName;
+  if (student?.name) return student.name;
+  return `${student?.firstName || ''} ${student?.surname || ''}`.trim();
+}
+
+function arrayEquals(a, b) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 const CreateProject = observer(() => {
   const { subjectId } = useParams();
@@ -35,6 +65,142 @@ const CreateProject = observer(() => {
   const [formValues, setFormValues] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [projectType, setProjectType] = useState('individual'); // 'individual' or 'group'
+  const [assignmentMap, setAssignmentMap] = useState({});
+  const [selectedAssignmentRowKeys, setSelectedAssignmentRowKeys] = useState([]);
+  const [bulkMarkerIds, setBulkMarkerIds] = useState([]);
+  const [markerDirectory, setMarkerDirectory] = useState([]);
+
+  const selectedMarkerPool = useMemo(
+    () => normalizeIdList(markerStore.selectedMarkerIds),
+    [markerStore.selectedMarkerIds]
+  );
+
+  const sanitizeMarkerIds = useCallback(
+    (ids) => {
+      const allowed = new Set(selectedMarkerPool);
+      return normalizeIdList(ids).filter((id) => allowed.has(id));
+    },
+    [selectedMarkerPool]
+  );
+
+  const individualRows = useMemo(
+    () =>
+      (studentStore.subjectStudentsList || []).map((student) => ({
+        ...student,
+        __rowKey: String(student.studentId),
+      })),
+    [studentStore.subjectStudentsList]
+  );
+
+  const groupRows = useMemo(
+    () =>
+      (studentStore.groupStudentsList || []).map((group, index) => ({
+        ...group,
+        __rowKey: String(group.groupName || `group-${index + 1}`),
+      })),
+    [studentStore.groupStudentsList]
+  );
+
+  const assignmentRows = projectType === 'group' ? groupRows : individualRows;
+
+  const markerOptions = useMemo(() => {
+    const markerMap = new Map(
+      (markerDirectory || []).map((m) => [normalizeId(m.userId ?? m.id), m])
+    );
+    return selectedMarkerPool.map((id) => {
+      const marker = markerMap.get(id);
+      return {
+        value: id,
+        label: marker
+          ? `${marker.userName || marker.name || `Marker ${id}`} (#${id})`
+          : `Marker #${id}`,
+      };
+    });
+  }, [markerDirectory, selectedMarkerPool]);
+
+  const rowSelection = {
+    selectedRowKeys: selectedAssignmentRowKeys,
+    onChange: (keys) => setSelectedAssignmentRowKeys(keys),
+  };
+
+  const individualColumns = useMemo(
+    () => [
+      { title: 'Student ID', dataIndex: 'studentId', width: 140 },
+      {
+        title: 'Name',
+        key: 'name',
+        render: (_, row) => getStudentDisplayName(row) || '-',
+      },
+      {
+        title: 'Assigned Markers',
+        key: 'markers',
+        width: 460,
+        render: (_, row) => (
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            placeholder="Select markers"
+            value={assignmentMap[row.__rowKey] || []}
+            options={markerOptions}
+            onChange={(ids) => {
+              const next = sanitizeMarkerIds(ids);
+              setAssignmentMap((prev) => {
+                const updated = { ...prev, [row.__rowKey]: next };
+                projectStore.setCreateProjectAssignments(projectType, updated);
+                return updated;
+              });
+            }}
+            style={{ width: '100%' }}
+            disabled={markerOptions.length === 0}
+          />
+        ),
+      },
+    ],
+    [assignmentMap, markerOptions, projectStore, projectType, sanitizeMarkerIds]
+  );
+
+  const groupColumns = useMemo(
+    () => [
+      {
+        title: 'Group Name',
+        dataIndex: 'groupName',
+        render: (v) => v || '-',
+      },
+      {
+        title: 'Members',
+        key: 'members',
+        width: 120,
+        render: (_, row) => (Array.isArray(row.students) ? row.students.length : 0),
+      },
+      {
+        title: 'Assigned Markers',
+        key: 'markers',
+        width: 460,
+        render: (_, row) => (
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            placeholder="Select markers"
+            value={assignmentMap[row.__rowKey] || []}
+            options={markerOptions}
+            onChange={(ids) => {
+              const next = sanitizeMarkerIds(ids);
+              setAssignmentMap((prev) => {
+                const updated = { ...prev, [row.__rowKey]: next };
+                projectStore.setCreateProjectAssignments(projectType, updated);
+                return updated;
+              });
+            }}
+            style={{ width: '100%' }}
+            disabled={markerOptions.length === 0}
+          />
+        ),
+      },
+    ],
+    [assignmentMap, markerOptions, projectStore, projectType, sanitizeMarkerIds]
+  );
 
   // Restore form data from store (in-memory only, cleared on refresh)
   useEffect(() => {
@@ -43,19 +209,121 @@ const CreateProject = observer(() => {
       form.setFieldsValue(savedFormData);
       setFormValues(savedFormData);
       if (savedFormData.projectType) {
-        setProjectType(savedFormData.projectType);
+        const savedType = savedFormData.projectType;
+        setProjectType(savedType);
+        setAssignmentMap(projectStore.createProjectAssignments?.[savedType] || {});
       }
     }
-  }, [form]);
+  }, [form, projectStore]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchStudents = async () => {
+      try {
+        studentStore.clearSubjectStudents();
+        const res = await getStudentListBySubject(subjectId);
+        const list = Array.isArray(res) ? res : res?.data || [];
+        if (!cancelled) {
+          studentStore.addAllStudents(list);
+        }
+      } catch (error) {
+        console.error(error);
+        message.error('Failed to load students for assignment');
+      }
+    };
+    fetchStudents();
+    return () => {
+      cancelled = true;
+    };
+  }, [studentStore, subjectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchMarkers = async () => {
+      try {
+        const res = await getAllMarkers();
+        if (!cancelled && res?.code === 200) {
+          setMarkerDirectory(Array.isArray(res.data) ? res.data : []);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchMarkers();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setAssignmentMap((prev) => {
+      const next = {};
+      assignmentRows.forEach((row) => {
+        next[row.__rowKey] = sanitizeMarkerIds(prev[row.__rowKey] || []);
+      });
+
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      const sameSize = prevKeys.length === nextKeys.length;
+      const sameValues = sameSize
+        ? nextKeys.every((k) => arrayEquals(prev[k] || [], next[k] || []))
+        : false;
+
+      if (sameValues) return prev;
+      projectStore.setCreateProjectAssignments(projectType, next);
+      return next;
+    });
+
+    setSelectedAssignmentRowKeys((prev) => {
+      const validKeySet = new Set(assignmentRows.map((r) => r.__rowKey));
+      return prev.filter((k) => validKeySet.has(k));
+    });
+  }, [assignmentRows, projectStore, projectType, sanitizeMarkerIds]);
 
   // Handle projectType change from individual to group
   const handleProjectTypeChange = (e) => {
+    projectStore.setCreateProjectAssignments(projectType, assignmentMap);
     const newProjectType = e.target.value;
     setProjectType(newProjectType);
+    setAssignmentMap(projectStore.createProjectAssignments?.[newProjectType] || {});
+    setSelectedAssignmentRowKeys([]);
+    setBulkMarkerIds([]);
 
     const values = form.getFieldsValue();
     const dataToSave = { ...values, projectType: newProjectType };
     projectStore.setCreateProjectFormData(dataToSave);
+  };
+
+  const applyBulkAssignment = (mode) => {
+    if (!selectedAssignmentRowKeys.length) {
+      message.warning('Please select at least one row');
+      return;
+    }
+
+    if (mode !== 'clear' && !bulkMarkerIds.length) {
+      message.warning('Please choose marker(s) for the batch action');
+      return;
+    }
+
+    const sanitizedBulk = sanitizeMarkerIds(bulkMarkerIds);
+    setAssignmentMap((prev) => {
+      const next = { ...prev };
+      selectedAssignmentRowKeys.forEach((key) => {
+        const current = prev[key] || [];
+        if (mode === 'append') {
+          next[key] = normalizeIdList([...current, ...sanitizedBulk]);
+        } else if (mode === 'replace') {
+          next[key] = sanitizedBulk;
+        } else if (mode === 'remove') {
+          const removeSet = new Set(sanitizedBulk);
+          next[key] = current.filter((id) => !removeSet.has(id));
+        } else {
+          next[key] = [];
+        }
+      });
+      projectStore.setCreateProjectAssignments(projectType, next);
+      return next;
+    });
   };
 
 
@@ -72,26 +340,71 @@ const CreateProject = observer(() => {
 
     // Collect all data for project creation based on project type
     // countdown: ms (convert from timer in minutes)
+    const markerList = normalizeIdList(markerStore.selectedMarkerIds);
+
+    if (markerList.length === 0) {
+      message.warning('Please assign at least one marker');
+      return;
+    }
+
+    if (assignmentRows.length === 0) {
+      message.warning(
+        projectType === 'group'
+          ? 'Please form groups before assigning markers'
+          : 'No students found for assignment'
+      );
+      return;
+    }
+
+    const missingAssignments = assignmentRows.filter(
+      (row) => !sanitizeMarkerIds(assignmentMap[row.__rowKey]).length
+    );
+    if (missingAssignments.length > 0) {
+      message.warning(
+        `${missingAssignments.length} ${
+          projectType === 'group' ? 'group(s)' : 'student(s)'
+        } have no marker assigned`
+      );
+      return;
+    }
+
     const baseProjectData = {
       name: values.name,
       elements: assessmentStore.elementList,  // Get elements from store
       countdown: values.timer ? values.timer * 60 * 1000 : null,
       projectType: projectType,
-      markerList: markerStore.selectedMarkerIds.slice(),
+      markerList,
       subjectId: subjectId,
     };
 
     // Add type-specific data
     let projectData;
     if (projectType === 'individual') {
+      const markerStudents = individualRows.map((student) => ({
+        studentId: normalizeId(student.studentId),
+        markerIds: sanitizeMarkerIds(assignmentMap[student.__rowKey] || []),
+      }));
+
       projectData = {
         ...baseProjectData,
+        markerStudents,
+        groups: [],
       };
     } else {
       // For group projects, add groups
+      const groupKeyMap = new Map(groupRows.map((group) => [group.groupName, group.__rowKey]));
+      const groupsWithMarkers = (studentStore.groups || []).map((group) => {
+        const key = groupKeyMap.get(group.groupName);
+        return {
+          ...group,
+          markerIds: sanitizeMarkerIds(assignmentMap[key] || []),
+        };
+      });
+
       projectData = {
         ...baseProjectData,
-        groups: studentStore.groups || [],
+        markerStudents: [],
+        groups: groupsWithMarkers,
       };
     }
 
@@ -114,10 +427,20 @@ const CreateProject = observer(() => {
       if (hasEmptyGroup) {
         return message.warning('All groups must have at least one student');
       }
-    }
 
-    if (projectData.markerList.length === 0) {
-      return message.warning('Please assign at least one marker');
+      const hasUnassignedMarkerGroup = projectData.groups.some(
+        (group) => !Array.isArray(group.markerIds) || group.markerIds.length === 0
+      );
+      if (hasUnassignedMarkerGroup) {
+        return message.warning('All groups must have at least one marker');
+      }
+    } else {
+      const hasUnassignedMarkerStudent = projectData.markerStudents.some(
+        (item) => !Array.isArray(item.markerIds) || item.markerIds.length === 0
+      );
+      if (hasUnassignedMarkerStudent) {
+        return message.warning('All students must have at least one marker');
+      }
     }
 
     // Set submitting state
@@ -169,11 +492,15 @@ const CreateProject = observer(() => {
     setProjectType('individual');
 
     projectStore.clearCreateProjectFormData();
+    projectStore.clearCreateProjectAssignments();
     studentStore.clearGroupStudents();
     studentStore.clearGroups();
     studentStore.clearSubjectStudents();
     markerStore.clearSelected();
     assessmentStore.clearElements();
+    setAssignmentMap({});
+    setSelectedAssignmentRowKeys([]);
+    setBulkMarkerIds([]);
   };
 
   // Save form data to store before navigating (in-memory only)
@@ -181,7 +508,31 @@ const CreateProject = observer(() => {
     const values = form.getFieldsValue();
     const dataToSave = { ...values, projectType };
     projectStore.setCreateProjectFormData(dataToSave);
+    projectStore.setCreateProjectAssignments(projectType, assignmentMap);
   };
+
+  const unassignedCount = useMemo(
+    () =>
+      assignmentRows.filter((row) => !(assignmentMap[row.__rowKey] || []).length)
+        .length,
+    [assignmentMap, assignmentRows]
+  );
+
+  const groupMemberColumns = useMemo(
+    () => [
+      {
+        title: 'ID',
+        dataIndex: 'studentId',
+        width: 120,
+      },
+      {
+        title: 'Name',
+        key: 'name',
+        render: (_, s) => s?.studentName || '-',
+      },
+    ],
+    []
+  );
 
 
   return (
@@ -248,7 +599,7 @@ const CreateProject = observer(() => {
               {assessmentStore.hasElements ? (
                 <div className={styles.criteriaListContainer}>
                   <div className={styles.criteriaList}>
-                    {assessmentStore.elementList.map((element, index) => (
+                    {assessmentStore.elementList.map((element) => (
                       <div key={element.elementId} className={styles.criterionItem}>
                         <div className={styles.criterionName}>
                           <Text strong>{element.Name}</Text>
@@ -422,9 +773,27 @@ const CreateProject = observer(() => {
                 history.push('/selectMarker');
               }}
             >
-              Assign Markers
+                Select Markers
             </Button>
           </div>
+
+          <Form.Item label="Marker Assignment" required>
+            <MarkerAssignmentPanel
+              projectType={projectType}
+              assignmentRows={assignmentRows}
+              unassignedCount={unassignedCount}
+              selectedMarkerPoolCount={selectedMarkerPool.length}
+              markerOptions={markerOptions}
+              bulkMarkerIds={bulkMarkerIds}
+              onBulkMarkerIdsChange={(ids) => setBulkMarkerIds(sanitizeMarkerIds(ids))}
+              onApplyBulkAssignment={applyBulkAssignment}
+              rowSelection={rowSelection}
+              individualColumns={individualColumns}
+              groupColumns={groupColumns}
+              groupMemberColumns={groupMemberColumns}
+              pageSize={8}
+            />
+          </Form.Item>
 
           {/* Submit button */}
           <div className={styles.submitSection}>

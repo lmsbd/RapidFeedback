@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   Button,
@@ -26,7 +26,7 @@ import { useStores } from '@/stores';
 import { getTemplateElements } from '@/apis/getTemplateElements';
 import styles from './criteriaEditor.module.less';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 // Custom component to sync InputNumber and Slider
 const WeightingInput = ({ value = 0, onChange }) => {
@@ -57,7 +57,13 @@ const WeightingInput = ({ value = 0, onChange }) => {
 };
 
 const CriteriaEditor = observer(() => {
-  const { assessmentStore } = useStores();
+  const { assessmentStore, projectStore } = useStores();
+  const location = useLocation();
+  const fromEditProjectId = useMemo(() => {
+    const params = new URLSearchParams(location.search || '');
+    const value = params.get('fromEditProject');
+    return value ? String(value) : null;
+  }, [location.search]);
 
   // State for template elements from backend
   const [elements, setElements] = useState([]);
@@ -108,10 +114,29 @@ const CriteriaEditor = observer(() => {
   const syncWithAssessmentStore = () => {
     const selectedIds = new Set();
     const formValues = {};
+    const templateById = new Map(elements.map((el) => [el.id, el]));
+    const templateByName = new Map(
+      elements.map((el) => [
+        String(el.name || '')
+          .trim()
+          .toLowerCase(),
+        el,
+      ])
+    );
 
     // Process each element in assessmentStore
     assessmentStore.elementList.forEach((storeElement) => {
-      const elementId = storeElement.elementId;
+      const rawId = storeElement.elementId;
+      const normalizedName = String(
+        storeElement.Name ?? storeElement.name ?? ''
+      )
+        .trim()
+        .toLowerCase();
+      const resolvedTemplate =
+        templateById.get(rawId) || templateByName.get(normalizedName);
+
+      if (!resolvedTemplate) return;
+      const elementId = resolvedTemplate.id;
       selectedIds.add(elementId);
 
       // Set form values from store
@@ -154,10 +179,20 @@ const CriteriaEditor = observer(() => {
     form
       .validateFields()
       .then((values) => {
+        const effectiveSelectedIds = Array.from(selectedElements).filter(
+          (elementId) => Number(values[`weighting_${elementId}`] || 0) > 0
+        );
+
+        if (effectiveSelectedIds.length === 0) {
+          message.warning('Please select at least one element');
+          return;
+        }
+
         // Build the elements array in the specified format
-        const selectedElementsData = Array.from(selectedElements).map(
-          (elementId) => {
+        const selectedElementsData = effectiveSelectedIds
+          .map((elementId) => {
             const element = elements.find((e) => e.id === elementId);
+            if (!element) return null;
             return {
               elementId: elementId,
               Name: element.name,
@@ -165,11 +200,37 @@ const CriteriaEditor = observer(() => {
               maximumMark: values[`maxMark_${elementId}`],
               markIncrements: values[`markIncrement_${elementId}`],
             };
-          }
-        );
+          })
+          .filter(Boolean);
 
         // Save to assessmentStore
         assessmentStore.setElements(selectedElementsData);
+
+        // Keep edit-project cache in sync so returning page won't restore stale criteria.
+        if (fromEditProjectId) {
+          const cached = projectStore.getEditProjectDetail(fromEditProjectId);
+          if (cached) {
+            const nextAssessment = selectedElementsData.map((item) => ({
+              elementId: item.elementId,
+              name: item.Name,
+              weighting: item.weighting,
+              maxMark: item.maximumMark,
+              markIncrements: item.markIncrements,
+            }));
+            const firstDesc = Array.isArray(cached.description)
+              ? cached.description[0] || {}
+              : {};
+            projectStore.setEditProjectDetail(fromEditProjectId, {
+              ...cached,
+              description: [
+                {
+                  ...firstDesc,
+                  assessment: nextAssessment,
+                },
+              ],
+            });
+          }
+        }
 
         // Show success message and redirect back
         message.success('Assessment criteria saved successfully');
@@ -181,16 +242,18 @@ const CriteriaEditor = observer(() => {
       });
   };
 
-  const validateWeightings = (_, value) => {
-    // Calculate total weighting for selected elements only
+  const validateWeightings = () => {
+    // Calculate total weighting for selected elements only.
+    // Treat weighting=0 as effectively not selected.
     let totalWeighting = 0;
     selectedElements.forEach((elementId) => {
       const fieldName = `weighting_${elementId}`;
       const fieldValue = form.getFieldValue(fieldName);
-      totalWeighting += Number(fieldValue || 0);
+      const num = Number(fieldValue || 0);
+      if (num > 0) totalWeighting += num;
     });
 
-    if (selectedElements.size > 0 && totalWeighting !== 100) {
+    if (totalWeighting > 0 && totalWeighting !== 100) {
       return Promise.reject('Total weighting must equal 100%');
     }
     return Promise.resolve();

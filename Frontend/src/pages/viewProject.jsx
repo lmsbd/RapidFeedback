@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'umi';
-import { Card, Descriptions, Empty, Table, Typography, message } from 'antd';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useParams, history } from 'umi';
+import {Card, Descriptions, Empty, Table, Typography, message, Tag, Space, Button } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import BackButton from '../components/BackButton/BackButton';
-import {
-  getProjectDetail,
-  getProjectDetailReal,
-} from '../apis/getProjectDetail';
+import { getProjectDetail } from '../apis/getProjectDetail';
+import userStore from '@/stores/userStore';
 import styles from './viewProject.module.less';
 
 const { Title, Text } = Typography;
@@ -14,6 +13,18 @@ function getStudentName(s) {
   const first = s?.firstName ?? s?.firstname ?? '';
   const sur = s?.surname ?? '';
   return `${first} ${sur}`.trim();
+}
+
+function normalizeId(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : value;
+}
+
+function extractMarkerIds(markers) {
+  if (!Array.isArray(markers)) return [];
+  return markers
+    .map((marker) => normalizeId(marker?.id ?? marker?.userId))
+    .filter((id) => id !== undefined && id !== null);
 }
 
 function normalizeDurationMs(ms) {
@@ -44,9 +55,10 @@ function formatMMSS(totalSeconds) {
 }
 
 export default function ViewProject() {
-  const { projectId } = useParams();
+  const { projectId, subjectId } = useParams();
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState(null);
+  const isMarker = String(userStore.role) === '2';
 
   useEffect(() => {
     let cancelled = false;
@@ -54,19 +66,14 @@ export default function ViewProject() {
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const mock = await getProjectDetail(projectId);
-        if (!cancelled) setDetail(mock || null);
+        const res = await getProjectDetail(projectId);
+        if (!cancelled && res !== null) setDetail(res);
       } catch (e) {
         console.error(e);
         message.error('Failed to load project detail');
       } finally {
         if (!cancelled) setLoading(false);
       }
-
-      try {
-        const real = await getProjectDetail(projectId);
-        if (!cancelled && real) setDetail(real);
-      } catch (e) {}
     };
 
     fetchDetail();
@@ -81,7 +88,7 @@ export default function ViewProject() {
 
   const studentColumns = useMemo(
     () => [
-      { title: 'ID', dataIndex: 'id', width: 120 },
+      { title: 'Student ID', dataIndex: 'studentId', width: 120 },
       { title: 'Name', key: 'name', render: (_, r) => getStudentName(r) },
       { title: 'Email', dataIndex: 'email', ellipsis: true },
     ],
@@ -129,6 +136,127 @@ export default function ViewProject() {
   const teams = Array.isArray(detail?.teams) ? detail.teams : [];
   const students = Array.isArray(detail?.students) ? detail.students : [];
   const markers = Array.isArray(detail?.markers) ? detail.markers : [];
+  const markerNameMap = useMemo(() => {
+    return new Map(
+      markers.map((m) => [
+        normalizeId(m?.id ?? m?.userId),
+        m?.name || m?.userName || `Marker #${m?.id ?? m?.userId}`,
+      ])
+    );
+  }, [markers]);
+
+  const renderMarkerIds = useCallback(
+    (ids) => {
+      const list = Array.isArray(ids) ? ids : [];
+      if (!list.length) return '-';
+      return (
+        <Space wrap>
+          {list.map((id) => {
+            const normalized = normalizeId(id);
+            const label = markerNameMap.get(normalized) || `Marker #${normalized}`;
+            return <Tag key={`${normalized}`}>{label}</Tag>;
+          })}
+        </Space>
+      );
+    },
+    [markerNameMap]
+  );
+
+  const individualAssignmentRows = useMemo(() => {
+    return students.map((student) => ({
+      ...student,
+      id: student?.id ?? student?.studentId,
+      studentId: student?.studentId ?? student?.id,
+      markerIds: extractMarkerIds(student?.markers),
+    }));
+  }, [students]);
+
+  const groupAssignmentRows = useMemo(() => {
+    return teams.map((team, index) => ({
+      ...team,
+      id: String(team?.id ?? index),
+      groupName: team?.groupName || team?.name || `Group ${index + 1}`,
+      students: Array.isArray(team?.students) ? team.students : [],
+      markerIds: extractMarkerIds(team?.markers),
+    }));
+  }, [teams]);
+
+  const individualAssignmentColumns = useMemo(
+    () => [
+      { title: 'Student ID', dataIndex: 'studentId', width: 140 },
+      {
+        title: 'Name',
+        key: 'name',
+        render: (_, r) => getStudentName(r) || r?.studentName || '-',
+      },
+      {
+        title: 'Assigned Markers',
+        key: 'markerIds',
+        render: (_, r) => renderMarkerIds(r?.markerIds),
+      },
+    ],
+    [renderMarkerIds]
+  );
+
+  const groupAssignmentColumns = useMemo(
+    () => [
+      { title: 'Group Name', dataIndex: 'groupName' },
+      {
+        title: 'Members',
+        key: 'members',
+        width: 120,
+        render: (_, r) => (Array.isArray(r?.students) ? r.students.length : 0),
+      },
+      {
+        title: 'Assigned Markers',
+        key: 'markerIds',
+        render: (_, r) => renderMarkerIds(r?.markerIds),
+      },
+    ],
+    [renderMarkerIds]
+  );
+
+  const assignmentStudentColumns = useMemo(
+    () => [
+      {
+        title: 'ID',
+        dataIndex: 'studentId',
+        width: 120,
+        render: (v, r) => v ?? r?.id ?? '-',
+      },
+      {
+        title: 'Name',
+        key: 'name',
+        render: (_, r) => getStudentName(r) || r?.studentName || '-',
+      },
+      { title: 'Email', dataIndex: 'email', ellipsis: true },
+    ],
+    []
+  );
+
+  const groupAssignmentExpandable = useMemo(
+    () => ({
+      expandedRowRender: (group) => {
+        const members = Array.isArray(group?.students) ? group.students : [];
+        if (!members.length) {
+          return <Empty description="No students" image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+        }
+
+        return (
+          <Table
+            rowKey={(record) => String(record.id ?? record.studentId)}
+            size="small"
+            dataSource={members}
+            columns={assignmentStudentColumns}
+            pagination={false}
+          />
+        );
+      },
+      rowExpandable: (group) =>
+        Array.isArray(group?.students) && group.students.length > 0,
+    }),
+    [assignmentStudentColumns]
+  );
 
   const descriptionArr = Array.isArray(detail?.description)
     ? detail.description
@@ -154,6 +282,21 @@ export default function ViewProject() {
         <Title level={2} className={styles.pageTitle}>
           {mainTitle}
         </Title>
+        {!isMarker && (
+          <div className={styles.editButtonContainer}>
+            <Button
+              type="primary"
+              icon={<EditOutlined className="editIcon" />}
+              onClick={() => {
+                history.push(`/${subjectId}/editProject/${projectId}`);
+              }}
+              className={styles.editButton}
+            >
+              Edit
+            </Button>
+          </div>
+        )}
+        
       </div>
 
       <div className={styles.mainContent}>
@@ -273,6 +416,39 @@ export default function ViewProject() {
                 />
               ) : (
                 <Empty description="No teams" />
+              )}
+            </Card>
+          )}
+
+          {detail && (
+            <Card
+              className={styles.projectSection}
+              title={<Text strong>Marker Assignments</Text>}
+              loading={loading}
+            >
+              {isTeam ? (
+                groupAssignmentRows.length ? (
+                  <Table
+                    rowKey={(r) => String(r.id)}
+                    size="middle"
+                    dataSource={groupAssignmentRows}
+                    columns={groupAssignmentColumns}
+                    pagination={{ pageSize: 10 }}
+                    expandable={groupAssignmentExpandable}
+                  />
+                ) : (
+                  <Empty description="No group marker assignments" />
+                )
+              ) : individualAssignmentRows.length ? (
+                <Table
+                  rowKey={(r) => String(r.id ?? r.studentId)}
+                  size="middle"
+                  dataSource={individualAssignmentRows}
+                  columns={individualAssignmentColumns}
+                  pagination={{ pageSize: 10 }}
+                />
+              ) : (
+                <Empty description="No student marker assignments" />
               )}
             </Card>
           )}

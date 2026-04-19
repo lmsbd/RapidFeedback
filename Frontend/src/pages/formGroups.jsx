@@ -67,11 +67,25 @@ const FormGroups = observer(() => {
     }
   }, []);
 
-  /** Validate CSV rows: no duplicate student IDs, IDs in subject list, group column present. */
+  /** Validate required columns first, then duplicate/enrollment checks. */
   function validateUploadedCsv(studentList, results) {
+    const fields = Array.isArray(results?.meta?.fields)
+      ? results.meta.fields.map((f) => String(f || '').trim().toUpperCase())
+      : [];
+    const hasGroupColumn = fields.includes('GROUP') || fields.includes('GROUPNAME');
+    const hasStudentIdColumn = fields.includes('STUDENTID');
+    if (!hasGroupColumn || !hasStudentIdColumn) {
+      return {
+        ok: false,
+        message:
+          'CSV must include columns: groupName (or group), and studentID (or studentId).',
+      };
+    }
+
     const raw = results.data || [];
+    const getStudentId = (row) => String(row?.studentId ?? '').trim();
     const uploadedList = raw.filter(
-      (row) => row && String(row.studentId ?? '').trim() !== ''
+      (row) => row && getStudentId(row) !== ''
     );
     if (uploadedList.length === 0) {
       return {
@@ -81,7 +95,7 @@ const FormGroups = observer(() => {
     }
     const seen = new Set();
     for (const row of uploadedList) {
-      const id = String(row.studentId).trim();
+      const id = getStudentId(row);
       if (seen.has(id)) {
         return {
           ok: false,
@@ -103,7 +117,7 @@ const FormGroups = observer(() => {
     const invalid = uploadedList.filter(
       (item) =>
         !studentList.some(
-          (student) => String(student.studentId) === String(item.studentId)
+          (student) => String(student.studentId) === getStudentId(item)
         )
     );
     if (invalid.length > 0) {
@@ -140,9 +154,11 @@ const FormGroups = observer(() => {
           header: true,
           skipEmptyLines: true,
           transformHeader: (header) => {
-            const t = String(header).trim();
-            if (t === 'group') return 'groupName';
-            return t;
+            const normalized = String(header).trim().toUpperCase();
+            if (normalized === 'GROUP' || normalized === 'GROUPNAME') return 'groupName';
+            if (normalized === 'STUDENTID') return 'studentId';
+            if (normalized === 'STUDENTNAME') return 'studentName';
+            return String(header).trim();
           },
           complete: (results) => {
             const validation = validateUploadedCsv(

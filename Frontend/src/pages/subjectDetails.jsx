@@ -1,5 +1,5 @@
 import { history, useParams } from 'umi';
-import { Button, Card, Modal, Tooltip, Typography, message } from 'antd';
+import { Button, Card, Empty, Modal, Tooltip, Typography, message } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -33,6 +33,15 @@ function pickFirstCount(...values) {
 }
 
 function getProjectProgress(project) {
+  const markedCount = pickFirstCount(project?.markedCount);
+  const unmarkedCount = pickFirstCount(project?.unmarkedCount);
+  if (markedCount !== null || unmarkedCount !== null) {
+    return {
+      leftText: markedCount === null ? '-' : String(markedCount),
+      rightText: unmarkedCount === null ? '-' : String(unmarkedCount),
+    };
+  }
+
   const projectType = String(project?.projectType || '').toLowerCase();
   const isGroupProject =
     projectType.includes('group') || projectType.includes('team');
@@ -63,8 +72,8 @@ function getProjectProgress(project) {
       );
 
   return {
-    scoredText: scored === null ? '-' : String(scored),
-    totalText: total === null ? '-' : String(total),
+    leftText: scored === null ? '-' : String(scored),
+    rightText: total === null ? '-' : String(total),
   };
 }
 
@@ -72,10 +81,19 @@ export default function SubjectDetails() {
   const { id: subjectId } = useParams(); // 从 /subjectDetails/:id 里拿 id
   const [subjectName, setSubjectName] = useState('');
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const isMarker = String(userStore.role) === '2';
+  const showMarkCounts = Array.isArray(projects)
+    ? projects.some(
+        (p) =>
+          pickFirstCount(p?.markedCount) !== null ||
+          pickFirstCount(p?.unmarkedCount) !== null
+      )
+    : false;
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
       const projectsData = await getProjectList(subjectId);
       setSubjectName(subjectStore.getSubjectNameFromSession(subjectId));
@@ -84,6 +102,8 @@ export default function SubjectDetails() {
     } catch (error) {
       console.error('Failed to fetch projects:', error);
       setProjects([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,7 +132,7 @@ export default function SubjectDetails() {
     history.push(`/`);
   };
   const handleViewProject = (project) => {
-    history.push(`/viewProject/${project.id}`);
+    history.push(`/${subjectId}/viewProject/${project.id}`);
   };
 
   const handleDeleteClick = (project) => {
@@ -174,53 +194,67 @@ export default function SubjectDetails() {
         </Button>
       </div>
       <div className={styles.mainContent}>
-        <Card className={styles.projectSection}>
-          {projects &&
-            Array.isArray(projects) &&
-            projects.length > 0 &&
-            projects.map((project) => {
-              const { scoredText, totalText } = getProjectProgress(project);
-              return (
-                <div className={styles.projectItem} key={project.id}>
-                  <div className={styles.itemBody}>
-                    <p
-                      className={styles.itemName}
-                      onClick={() => handleViewProject(project)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleViewProject(project);
-                      }}
-                    >
-                      {project.name}
-                    </p>
-                    <div className={styles.itemRatio}>
-                      <p className={styles.itemCnt}>{scoredText}</p>
-                      <p className={styles.itemCnt}>/</p>
-                      <p className={styles.itemCnt}>{totalText}</p>
-                    </div>
-                    <div className={styles.itemBtns}>
-                      <Button
-                        className={styles.actionButton}
-                        onClick={() => handleEditClick(project)}
-                        icon={<EditOutlined />}
+        <Card className={styles.projectSection} loading={loading}>
+          {Array.isArray(projects) && projects.length > 0 ? (
+            <>
+              <div className={styles.projectTableHeader}>
+                <div className={styles.headerCell}>Project</div>
+                <div className={styles.headerCell}>
+                  {showMarkCounts ? 'Marked / Unmarked' : 'Scored / Total'}
+                </div>
+                <div className={styles.headerCell}>Actions</div>
+              </div>
+              {projects.map((project) => {
+                const { leftText, rightText } = getProjectProgress(project);
+                return (
+                  <div className={styles.projectItem} key={project.id}>
+                    <div className={styles.itemBody}>
+                      <p
+                        className={styles.itemName}
+                        onClick={() => handleViewProject(project)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleViewProject(project);
+                        }}
                       >
-                        Mark & Review
-                      </Button>
-                      <Button
-                        danger
-                        className={styles.deleteButton}
-                        onClick={() => handleDeleteClick(project)}
-                        icon={<DeleteOutlined />}
-                        disabled={isMarker}
-                      >
-                        Delete
-                      </Button>
+                        {project.name}
+                      </p>
+                      <div className={styles.itemRatio}>
+                        <p className={styles.itemCnt}>{leftText}</p>
+                        <p className={styles.itemCnt}>/</p>
+                        <p className={styles.itemCnt}>{rightText}</p>
+                      </div>
+                      <div className={styles.itemBtns}>
+                        <Button
+                          className={styles.actionButton}
+                          onClick={() => handleEditClick(project)}
+                          icon={<EditOutlined />}
+                        >
+                          Mark & Review
+                        </Button>
+                        <Button
+                          danger
+                          className={styles.deleteButton}
+                          onClick={() => handleDeleteClick(project)}
+                          icon={<DeleteOutlined />}
+                          disabled={isMarker}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </>
+          ) : (
+            <Empty
+              description={
+                isMarker ? 'No projects available' : 'No projects yet'
+              }
+            ></Empty>
+          )}
         </Card>
       </div>
     </div>

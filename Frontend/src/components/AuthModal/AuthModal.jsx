@@ -197,6 +197,30 @@ const AuthModal = observer(({ visible, onClose }) => {
             </Form.Item>
 
             <Form.Item
+              name="confirmPassword"
+              label="Confirm Password"
+              dependencies={['password']}
+              rules={[
+                { required: true, message: 'Please confirm your password' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('password') === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error('The two passwords do not match')
+                    );
+                  },
+                }),
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Please confirm your password"
+              />
+            </Form.Item>
+
+            <Form.Item
               name="role"
               label="Role"
               rules={[{ required: true, message: 'Please select a role' }]}

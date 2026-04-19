@@ -34,6 +34,18 @@ public class ProjectResponseVO {
 
     private String projectType;
 
+    /**
+     * Marked count: number of students (individual project) or groups (group project)
+     * already evaluated under the current viewer's perspective.
+     */
+    private Integer markedCount;
+
+    /**
+     * Unmarked count: number of students (individual project) or groups (group project)
+     * still pending evaluation under the current viewer's perspective.
+     */
+    private Integer unmarkedCount;
+
 }
 
 

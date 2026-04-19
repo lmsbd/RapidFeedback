@@ -13,9 +13,30 @@ class ProjectStore {
   projects = [];
   currentProject = null;
   createProjectFormData = null; // In-memory only, cleared on refresh
+  createProjectAssignments = {
+    individual: {},
+    group: {},
+  };
+  editProjectDetailCache = {}; // { projectId: detail } - avoid refetch when returning from sub-pages
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setEditProjectDetail(projectId, detail) {
+    if (projectId != null && detail) {
+      this.editProjectDetailCache[String(projectId)] = detail;
+    }
+  }
+
+  getEditProjectDetail(projectId) {
+    return projectId != null ? this.editProjectDetailCache[String(projectId)] : null;
+  }
+
+  clearEditProjectDetail(projectId) {
+    if (projectId != null) {
+      delete this.editProjectDetailCache[String(projectId)];
+    }
   }
 
   setCreateProjectFormData(data) {
@@ -24,6 +45,18 @@ class ProjectStore {
 
   clearCreateProjectFormData() {
     this.createProjectFormData = null;
+  }
+
+  setCreateProjectAssignments(type, assignments) {
+    if (type !== 'individual' && type !== 'group') return;
+    this.createProjectAssignments[type] = assignments || {};
+  }
+
+  clearCreateProjectAssignments() {
+    this.createProjectAssignments = {
+      individual: {},
+      group: {},
+    };
   }
 
   setProjects(subjectId, projects) {
