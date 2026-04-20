@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
-    @Autowired(required = false)
+    @Autowired
     private JavaMailSender mailSender;
 
     @org.springframework.beans.factory.annotation.Value("${spring.mail.username}")
