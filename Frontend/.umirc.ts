@@ -83,16 +83,5 @@ export default defineConfig({
       ],
     },
   ],
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8076/rfo/api',
-      changeOrigin: true,
-      pathRewrite: { '^/api': '' },
-    },
-    '/avatars': {
-      target: 'http://localhost:8076/rfo',
-      changeOrigin: true,
-    },
-  },
   npmClient: 'pnpm',
 });
