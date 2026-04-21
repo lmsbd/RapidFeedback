@@ -1,10 +1,15 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Frontend",
-    "\\Frontend\\src",
-    "\\Frontend\\src\\utils"
+    "\\Backend",
+    "\\Backend\\src",
+    "\\Backend\\src\\main",
+    "\\Backend\\src\\main\\java",
+    "\\Backend\\src\\main\\java\\com",
+    "\\Backend\\src\\main\\java\\com\\unimelb",
+    "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017",
+    "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017\\rfo"
   ],
-  "SelectedNode": "\\.gitignore",
+  "SelectedNode": "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017\\rfo\\config\\SecurityConfig.java",
   "PreviewInSolutionExplorer": false
 }
