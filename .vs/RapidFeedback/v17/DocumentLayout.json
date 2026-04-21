@@ -1,0 +1,139 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\package.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Frontend\\package.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\src\\utils\\request.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Frontend\\src\\utils\\request.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\.umirc.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Frontend\\.umirc.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Frontend\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\src\\main\\resources\\application.properties||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Backend\\src\\main\\resources\\application.properties||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Backend\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\pom.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Backend\\pom.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "package.json",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\package.json",
+              "RelativeDocumentMoniker": "Frontend\\package.json",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\package.json",
+              "RelativeToolTip": "Frontend\\package.json",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABsAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-21T03:53:53.121Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "request.js",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\src\\utils\\request.js",
+              "RelativeDocumentMoniker": "Frontend\\src\\utils\\request.js",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\src\\utils\\request.js",
+              "RelativeToolTip": "Frontend\\src\\utils\\request.js",
+              "ViewState": "AQIAABIAAAAAAAAAAAAmwC0AAAAXAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-04-21T03:51:58.207Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": ".umirc.ts",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\.umirc.ts",
+              "RelativeDocumentMoniker": "Frontend\\.umirc.ts",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\.umirc.ts",
+              "RelativeToolTip": "Frontend\\.umirc.ts",
+              "ViewState": "AQIAADwAAAAAAAAAAAAmwEkAAAAKAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-04-21T03:51:16.287Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\Dockerfile",
+              "RelativeDocumentMoniker": "Frontend\\Dockerfile",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Frontend\\Dockerfile",
+              "RelativeToolTip": "Frontend\\Dockerfile",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAAiAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-21T03:50:47.841Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "application.properties",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\src\\main\\resources\\application.properties",
+              "RelativeDocumentMoniker": "Backend\\src\\main\\resources\\application.properties",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\src\\main\\resources\\application.properties",
+              "RelativeToolTip": "Backend\\src\\main\\resources\\application.properties",
+              "ViewState": "AQIAAAcAAAAAAAAAAAAqwCMAAAAiAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-21T03:50:22.157Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\Dockerfile",
+              "RelativeDocumentMoniker": "Backend\\Dockerfile",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\Dockerfile",
+              "RelativeToolTip": "Backend\\Dockerfile",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAALAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-21T03:49:47.245Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "pom.xml",
+              "DocumentMoniker": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\pom.xml",
+              "RelativeDocumentMoniker": "Backend\\pom.xml",
+              "ToolTip": "C:\\Users\\\u5218\u8F69\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939 (5)\\RapidFeedback\\Backend\\pom.xml",
+              "RelativeToolTip": "Backend\\pom.xml",
+              "ViewState": "AQIAAJ8AAAAAAAAAAAAUwKwAAAA7AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003576|",
+              "WhenOpened": "2026-04-21T03:49:03.376Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

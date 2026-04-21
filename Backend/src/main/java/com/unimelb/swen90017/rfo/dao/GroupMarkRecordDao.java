@@ -49,10 +49,11 @@ public interface GroupMarkRecordDao extends BaseMapper<GroupMarkRecordPO> {
      */
     @Select("SELECT gs.student_id AS studentId, mr.group_score AS groupScore " +
             "FROM group_student gs " +
-            "LEFT JOIN mark_record mr ON mr.student_id = gs.student_id AND mr.project_id = #{projectId} " +
+            "LEFT JOIN mark_record mr ON mr.student_id = gs.student_id AND mr.project_id = #{projectId} AND mr.marker_id = #{markerId} " +
             "WHERE gs.group_id = #{groupId} AND (gs.delete_status = 0 OR gs.delete_status IS NULL)")
     List<GroupStudentMarkDTO> getStudentGroupScores(@Param("projectId") Long projectId,
-                                                    @Param("groupId") Long groupId);
+                                                    @Param("groupId") Long groupId,
+                                                    @Param("markerId") Long markerId);
 
     @Select("SELECT * FROM group_mark_record WHERE project_id = #{projectId}")
     List<GroupMarkRecordPO> getByProjectId(@Param("projectId") Long projectId);

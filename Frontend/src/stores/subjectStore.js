@@ -41,6 +41,44 @@ class SubjectStore {
     }
   }
 
+  upsertSubjectCache(subject) {
+    const normalizedId = String(subject?.id || '');
+    if (!normalizedId) return;
+
+    let baseSubjects = Array.isArray(this.subjects) ? [...this.subjects] : [];
+    if (baseSubjects.length === 0) {
+      try {
+        const cachedSubjects = sessionStorage.getItem('subjects');
+        const parsed = cachedSubjects ? JSON.parse(cachedSubjects) : [];
+        baseSubjects = Array.isArray(parsed)
+          ? parsed.map((s) => ({ ...s, id: String(s.id) }))
+          : [];
+      } catch (error) {
+        baseSubjects = [];
+      }
+    }
+
+    const index = baseSubjects.findIndex(
+      (s) => String(s.id) === normalizedId
+    );
+    const nextSubject = {
+      ...baseSubjects[index],
+      ...subject,
+      id: normalizedId,
+      name: String(subject?.name || ''),
+      description: String(subject?.description || ''),
+    };
+
+    if (index >= 0) {
+      baseSubjects[index] = nextSubject;
+    } else {
+      baseSubjects.push(nextSubject);
+    }
+
+    this.subjects = baseSubjects;
+    this.saveToSessionStorage();
+  }
+
   saveToSessionStorage() {
     try {
       sessionStorage.setItem('subjects', JSON.stringify(this.subjects));

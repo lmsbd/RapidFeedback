@@ -13,6 +13,7 @@ import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectStudentListRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupWithStudentResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.StudentResponseVO;
+import com.unimelb.swen90017.rfo.pojo.vo.UserResponseVO;
 
 
 
@@ -87,4 +88,9 @@ public interface ProjectService extends IService<ProjectPO> {
     * Used by the frontend to decide which fields can still be edited via save().
     */
    boolean hasMarkingStarted(Long projectId);
+
+   /**
+    * Get markers by projectId (looks up parent subject) or directly by subjectId.
+    */
+   List<UserResponseVO> getMarkers(Long projectId, Long subjectId);
 }

@@ -8,6 +8,8 @@ import {
   Table,
   message,
   Popconfirm,
+  Modal,
+  Select,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -22,6 +24,7 @@ import { getSubjectsDetail } from '../apis/getSubject';
 import { getAllMarkers } from '../apis/getAllMarkers';
 import { updateSubject } from '../apis/updateSubject';
 import { useStores } from '../stores';
+import subjectStore from '../stores/subjectStore';
 import styles from './manageSubject.module.less';
 
 const { Title } = Typography;
@@ -36,6 +39,8 @@ const ManageSubject = observer(() => {
   const [saving, setSaving] = useState(false);
   const [allMarkers, setAllMarkers] = useState([]);
   const [initialMarkers, setInitialMarkers] = useState([]);
+  const [addMarkerOpen, setAddMarkerOpen] = useState(false);
+  const [pendingMarkerIds, setPendingMarkerIds] = useState([]);
 
   const selectionDraftKey = useMemo(
     () => `manageSubjectSelectionDraft_${id}`,
@@ -47,6 +52,7 @@ const ManageSubject = observer(() => {
   );
   const debugApi = searchParams.get('debugApi') === '1';
   const fromSelection = searchParams.get('fromSelection') === '1';
+  const selectionSource = searchParams.get('source');
 
   const saveSelectionDraft = (next = {}) => {
     const values = form.getFieldsValue();
@@ -80,16 +86,16 @@ const ManageSubject = observer(() => {
             name: safeDraft.name || '',
             description: safeDraft.description || '',
           });
-          // Preserve selections made in selector pages; repopulate only if store is empty.
-          if (studentStore.students.length === 0) {
-            (safeDraft.students || []).forEach((stu) =>
-              studentStore.addStudent(stu)
-            );
+          const shouldSyncStudents =
+            !selectionSource || selectionSource === 'students';
+          const shouldSyncMarkers = !selectionSource || selectionSource === 'markers';
+
+          if (shouldSyncStudents) {
+            studentStore.clearStudents();
+            (safeDraft.students || []).forEach((stu) => studentStore.addStudent(stu));
           }
-          if (markerStore.selectedMarkerIds.length === 0) {
-            markerStore.setSelected(
-              (safeDraft.markerIds || []).map((m) => Number(m))
-            );
+          if (shouldSyncMarkers) {
+            markerStore.setSelected((safeDraft.markerIds || []).map((m) => Number(m)));
           }
         } else {
           sessionStorage.removeItem(selectionDraftKey);
@@ -177,6 +183,7 @@ const ManageSubject = observer(() => {
     fromSelection,
     id,
     markerStore,
+    selectionSource,
     selectionDraftKey,
     studentStore,
   ]);
@@ -197,6 +204,68 @@ const ManageSubject = observer(() => {
       (idItem) => Number(idItem) !== Number(markerId)
     );
     markerStore.setSelected(next);
+  };
+
+  const availableMarkerOptions = useMemo(() => {
+    const selectedSet = new Set(
+      (markerStore.selectedMarkerIds || [])
+        .map((v) => markerStore.normalizeId(v))
+        .filter((v) => v != null)
+    );
+
+    return (Array.isArray(allMarkers) ? allMarkers : [])
+      .map((m) => {
+        const idValue = markerStore.normalizeId(m?.userId ?? m?.id);
+        if (idValue == null || selectedSet.has(idValue)) return null;
+        const roleText = m?.role === 1 ? 'Admin' : m?.role === 2 ? 'Marker' : '';
+        const label = `${m?.userName || m?.name || `Marker ${idValue}`}${
+          roleText ? ` (${roleText})` : ''
+        }`;
+        return { value: String(idValue), label };
+      })
+      .filter(Boolean);
+  }, [allMarkers, markerStore, markerStore.selectedMarkerIds]);
+
+  const handleAddMarkers = () => {
+    const normalizedToAdd = (Array.isArray(pendingMarkerIds) ? pendingMarkerIds : [])
+      .map((v) => markerStore.normalizeId(v))
+      .filter((v) => v != null);
+    if (normalizedToAdd.length === 0) {
+      message.warning('Please choose at least one marker');
+      return;
+    }
+
+    const existing = (markerStore.selectedMarkerIds || [])
+      .map((v) => markerStore.normalizeId(v))
+      .filter((v) => v != null);
+    const next = [];
+    const seen = new Set();
+    existing.forEach((v) => {
+      if (seen.has(v)) return;
+      seen.add(v);
+      next.push(v);
+    });
+    normalizedToAdd.forEach((v) => {
+      if (seen.has(v)) return;
+      seen.add(v);
+      next.push(v);
+    });
+
+    const pickedRows = normalizedToAdd
+      .map((idValue) =>
+        (Array.isArray(allMarkers) ? allMarkers : []).find(
+          (m) => markerStore.normalizeId(m?.userId ?? m?.id) === idValue
+        )
+      )
+      .filter(Boolean);
+
+    markerStore.setSelected(next);
+    if (pickedRows.length > 0) {
+      markerStore.upsertSelectedMarkers(pickedRows);
+    }
+
+    setAddMarkerOpen(false);
+    setPendingMarkerIds([]);
   };
 
   const handleSave = async () => {
@@ -230,6 +299,11 @@ const ManageSubject = observer(() => {
       setSaving(true);
       const res = await updateSubject(payload);
       if (res.code === 200) {
+        subjectStore.upsertSubjectCache({
+          id: Number(id),
+          name: values.name,
+          description: values.description,
+        });
         message.success('Subject updated successfully');
         sessionStorage.removeItem(selectionDraftKey);
         studentStore.clearStudents();
@@ -237,6 +311,26 @@ const ManageSubject = observer(() => {
         history.push(`/subjectDetails/${id}`);
       } else {
         message.error(res.message || res.msg || 'Failed to update subject');
+
+        const subjectRes = await getSubjectsDetail(id);
+        if (subjectRes?.code && Number(subjectRes.code) !== 200) {
+          message.error(
+            subjectRes.message || 'Failed to get subject details'
+          );
+          return;
+        }
+
+        const detailData = Array.isArray(subjectRes?.data)
+          ? subjectRes.data[0]
+          : subjectRes?.data;
+        const subjectData = detailData || {};
+
+        const studentList = Array.isArray(subjectData.students)
+          ? subjectData.students
+          : [];
+        studentStore.clearStudents();
+        studentList.forEach((stu) => studentStore.addStudent(stu));
+
       }
     } catch (error) {
       if (error?.errorFields) {
@@ -382,7 +476,7 @@ const ManageSubject = observer(() => {
               className={styles.actionButton}
               onClick={() => {
                 saveSelectionDraft();
-                history.push(`/selectStudent?fromManage=true&id=${id}`);
+                history.push(`/selectStudent?fromManage=true&id=${id}&source=students`);
               }}
             >
               Manage Students
@@ -393,7 +487,7 @@ const ManageSubject = observer(() => {
               className={styles.actionButton}
               onClick={() => {
                 saveSelectionDraft();
-                history.push(`/selectMarker?fromManage=true&id=${id}`);
+                history.push(`/selectMarker?fromManage=true&id=${id}&source=markers`);
               }}
             >
               Assign Markers
@@ -415,9 +509,18 @@ const ManageSubject = observer(() => {
       </Card>
 
       <Card className={styles.tableCard}>
-        <Typography.Title level={4}>
-          Selected Markers ({markerRows.length})
-        </Typography.Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Typography.Title level={4} style={{ marginBottom: 0, flex: 1 }}>
+            Selected Markers ({markerRows.length})
+          </Typography.Title>
+          <Button
+            icon={<TagsOutlined />}
+            onClick={() => setAddMarkerOpen(true)}
+            disabled={availableMarkerOptions.length === 0}
+          >
+            Add Marker
+          </Button>
+        </div>
         <Table
           dataSource={markerRows}
           columns={markerColumns}
@@ -425,6 +528,34 @@ const ManageSubject = observer(() => {
           pagination={{ pageSize: 5 }}
         />
       </Card>
+
+      <Modal
+        title="Add marker"
+        open={addMarkerOpen}
+        onCancel={() => {
+          setAddMarkerOpen(false);
+          setPendingMarkerIds([]);
+        }}
+        onOk={handleAddMarkers}
+        okText="Add"
+        destroyOnClose
+      >
+        <Select
+          mode="multiple"
+          allowClear
+          showSearch
+          placeholder="Search and select markers"
+          options={availableMarkerOptions}
+          value={pendingMarkerIds}
+          onChange={setPendingMarkerIds}
+          style={{ width: '100%' }}
+          filterOption={(input, option) =>
+            String(option?.label || '')
+              .toLowerCase()
+              .includes(String(input || '').toLowerCase())
+          }
+        />
+      </Modal>
     </div>
   );
 });

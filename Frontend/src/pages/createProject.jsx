@@ -24,9 +24,8 @@ import {
 import { history, useParams } from 'umi';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../stores';
-import { createProject } from '../apis/projects';
+import { createProject, getMarkers } from '../apis/projects';
 import { getStudentListBySubject } from '../apis/getStudents';
-import { getAllMarkers } from '../apis/getAllMarkers';
 import MarkerAssignmentPanel from '../components/MarkerAssignmentPanel/MarkerAssignmentPanel';
 import styles from './createProject.module.less';
 
@@ -61,12 +60,15 @@ function arrayEquals(a, b) {
 const CreateProject = observer(() => {
   const { subjectId } = useParams();
   const [form] = Form.useForm();
-  const { studentStore, markerStore, assessmentStore, projectStore } = useStores();
+  const { studentStore, markerStore, assessmentStore, projectStore } =
+    useStores();
   const [formValues, setFormValues] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [projectType, setProjectType] = useState('individual'); // 'individual' or 'group'
   const [assignmentMap, setAssignmentMap] = useState({});
-  const [selectedAssignmentRowKeys, setSelectedAssignmentRowKeys] = useState([]);
+  const [selectedAssignmentRowKeys, setSelectedAssignmentRowKeys] = useState(
+    []
+  );
   const [bulkMarkerIds, setBulkMarkerIds] = useState([]);
   const [markerDirectory, setMarkerDirectory] = useState([]);
 
@@ -171,7 +173,8 @@ const CreateProject = observer(() => {
         title: 'Members',
         key: 'members',
         width: 120,
-        render: (_, row) => (Array.isArray(row.students) ? row.students.length : 0),
+        render: (_, row) =>
+          Array.isArray(row.students) ? row.students.length : 0,
       },
       {
         title: 'Assigned Markers',
@@ -211,7 +214,9 @@ const CreateProject = observer(() => {
       if (savedFormData.projectType) {
         const savedType = savedFormData.projectType;
         setProjectType(savedType);
-        setAssignmentMap(projectStore.createProjectAssignments?.[savedType] || {});
+        setAssignmentMap(
+          projectStore.createProjectAssignments?.[savedType] || {}
+        );
       }
     }
   }, [form, projectStore]);
@@ -241,7 +246,11 @@ const CreateProject = observer(() => {
     let cancelled = false;
     const fetchMarkers = async () => {
       try {
-        const res = await getAllMarkers();
+        if (!subjectId) {
+          if (!cancelled) setMarkerDirectory([]);
+          return;
+        }
+        const res = await getMarkers({ subjectId });
         if (!cancelled && res?.code === 200) {
           setMarkerDirectory(Array.isArray(res.data) ? res.data : []);
         }
@@ -253,7 +262,7 @@ const CreateProject = observer(() => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [subjectId]);
 
   useEffect(() => {
     setAssignmentMap((prev) => {
@@ -285,7 +294,9 @@ const CreateProject = observer(() => {
     projectStore.setCreateProjectAssignments(projectType, assignmentMap);
     const newProjectType = e.target.value;
     setProjectType(newProjectType);
-    setAssignmentMap(projectStore.createProjectAssignments?.[newProjectType] || {});
+    setAssignmentMap(
+      projectStore.createProjectAssignments?.[newProjectType] || {}
+    );
     setSelectedAssignmentRowKeys([]);
     setBulkMarkerIds([]);
 
@@ -325,7 +336,6 @@ const CreateProject = observer(() => {
       return next;
     });
   };
-
 
   const onFinish = (values) => {
     // Validate assessment elements from store
@@ -370,7 +380,7 @@ const CreateProject = observer(() => {
 
     const baseProjectData = {
       name: values.name,
-      elements: assessmentStore.elementList,  // Get elements from store
+      elements: assessmentStore.elementList, // Get elements from store
       countdown: values.timer ? values.timer * 60 * 1000 : null,
       projectType: projectType,
       markerList,
@@ -392,7 +402,9 @@ const CreateProject = observer(() => {
       };
     } else {
       // For group projects, add groups
-      const groupKeyMap = new Map(groupRows.map((group) => [group.groupName, group.__rowKey]));
+      const groupKeyMap = new Map(
+        groupRows.map((group) => [group.groupName, group.__rowKey])
+      );
       const groupsWithMarkers = (studentStore.groups || []).map((group) => {
         const key = groupKeyMap.get(group.groupName);
         return {
@@ -429,7 +441,8 @@ const CreateProject = observer(() => {
       }
 
       const hasUnassignedMarkerGroup = projectData.groups.some(
-        (group) => !Array.isArray(group.markerIds) || group.markerIds.length === 0
+        (group) =>
+          !Array.isArray(group.markerIds) || group.markerIds.length === 0
       );
       if (hasUnassignedMarkerGroup) {
         return message.warning('All groups must have at least one marker');
@@ -513,8 +526,9 @@ const CreateProject = observer(() => {
 
   const unassignedCount = useMemo(
     () =>
-      assignmentRows.filter((row) => !(assignmentMap[row.__rowKey] || []).length)
-        .length,
+      assignmentRows.filter(
+        (row) => !(assignmentMap[row.__rowKey] || []).length
+      ).length,
     [assignmentMap, assignmentRows]
   );
 
@@ -533,7 +547,6 @@ const CreateProject = observer(() => {
     ],
     []
   );
-
 
   return (
     <div>
@@ -576,11 +589,14 @@ const CreateProject = observer(() => {
             <Card className={styles.assessmentCard}>
               <div className={styles.assessmentHeader}>
                 <div className={styles.assessmentTitle}>
-                  <SettingOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                  <SettingOutlined
+                    style={{ marginRight: 8, color: '#1890ff' }}
+                  />
                   <Text strong>Configured Criteria</Text>
                   {assessmentStore.hasElements && (
                     <Tag color="success" style={{ marginLeft: 8 }}>
-                      <CheckCircleOutlined /> {assessmentStore.elementCount} criteria
+                      <CheckCircleOutlined /> {assessmentStore.elementCount}{' '}
+                      criteria
                     </Tag>
                   )}
                 </div>
@@ -600,7 +616,10 @@ const CreateProject = observer(() => {
                 <div className={styles.criteriaListContainer}>
                   <div className={styles.criteriaList}>
                     {assessmentStore.elementList.map((element) => (
-                      <div key={element.elementId} className={styles.criterionItem}>
+                      <div
+                        key={element.elementId}
+                        className={styles.criterionItem}
+                      >
                         <div className={styles.criterionName}>
                           <Text strong>{element.Name}</Text>
                         </div>
@@ -695,7 +714,8 @@ const CreateProject = observer(() => {
           {projectType === 'group' && (
             <Form.Item label="Groups Formed">
               <div className={styles.groupsInfo}>
-                {studentStore.groupStudentsList && studentStore.groupStudentsList.length > 0 ? (
+                {studentStore.groupStudentsList &&
+                studentStore.groupStudentsList.length > 0 ? (
                   <div className={styles.groupsList}>
                     {studentStore.groupStudentsList.map((group, index) => (
                       <Card
@@ -706,7 +726,7 @@ const CreateProject = observer(() => {
                         <div className={styles.groupHeader}>
                           <TeamOutlined />
                           <span className={styles.groupName}>
-                            {group.groupName }
+                            {group.groupName}
                           </span>
                           <span className={styles.memberCount}>
                             ({group.studentIds ? group.studentIds.length : 0}{' '}
@@ -770,10 +790,10 @@ const CreateProject = observer(() => {
                 // Save current form data
                 saveFormData();
                 // Navigate to marker selection page
-                history.push('/selectMarker');
+                history.push(`/selectMarker?subjectId=${subjectId}`);
               }}
             >
-                Select Markers
+              Select Markers
             </Button>
           </div>
 
@@ -785,7 +805,9 @@ const CreateProject = observer(() => {
               selectedMarkerPoolCount={selectedMarkerPool.length}
               markerOptions={markerOptions}
               bulkMarkerIds={bulkMarkerIds}
-              onBulkMarkerIdsChange={(ids) => setBulkMarkerIds(sanitizeMarkerIds(ids))}
+              onBulkMarkerIdsChange={(ids) =>
+                setBulkMarkerIds(sanitizeMarkerIds(ids))
+              }
               onApplyBulkAssignment={applyBulkAssignment}
               rowSelection={rowSelection}
               individualColumns={individualColumns}

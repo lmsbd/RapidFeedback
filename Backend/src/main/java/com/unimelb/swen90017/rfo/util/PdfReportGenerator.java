@@ -127,7 +127,8 @@ public class PdfReportGenerator {
     public static class GroupSummaryRowV2 {
         public final String groupName;
         public final String members;
-        public final BigDecimal finalScore;       // final_mark.final_score
+        /** Average of per-student final_mark.final_score within the group. */
+        public final BigDecimal finalScore;
         public final BigDecimal groupTotal;       // getGroupTotalScore
         public final Map<Long, BigDecimal> criteriaAvgScores; // all members x all markers in each criterion
 
@@ -147,18 +148,22 @@ public class PdfReportGenerator {
         public final String studentId;
         public final String groupName;
         public final String markers;
+        /** Per-student final_mark.final_score keyed on (project_id, student_id, group_id). */
+        public final BigDecimal finalScore;
         public final BigDecimal individualTotalAvg; // avg of mark_record.total_score across markers
         public final BigDecimal groupScoreAvg;      // avg of mark_record.group_score across markers
         public final Map<Long, BigDecimal> criteriaAvgScores; // cross-marker per-criteria avg
 
         public IndividualInGroupSummaryRow(String studentName, String studentId, String groupName,
-                                            String markers, BigDecimal individualTotalAvg,
+                                            String markers, BigDecimal finalScore,
+                                            BigDecimal individualTotalAvg,
                                             BigDecimal groupScoreAvg,
                                             Map<Long, BigDecimal> criteriaAvgScores) {
             this.studentName = studentName;
             this.studentId = studentId;
             this.groupName = groupName;
             this.markers = markers;
+            this.finalScore = finalScore;
             this.individualTotalAvg = individualTotalAvg;
             this.groupScoreAvg = groupScoreAvg;
             this.criteriaAvgScores = criteriaAvgScores;
@@ -275,7 +280,7 @@ public class PdfReportGenerator {
 
             addHeaderCell(groupTable, "Group");
             addHeaderCell(groupTable, "Members");
-            addHeaderCell(groupTable, "Final Mark");
+            addHeaderCell(groupTable, "Final Mark Avg");
             addHeaderCell(groupTable, "Group Score Avg");
             for (AssessmentVO c : criteria) {
                 addHeaderCell(groupTable, c.getName() + " (" + c.getWeighting() + "%)");
@@ -303,7 +308,7 @@ public class PdfReportGenerator {
             studentsHeader.setSpacingAfter(5);
             document.add(studentsHeader);
 
-            int stuFixedCols = 6;
+            int stuFixedCols = 7;
             int stuTotalCols = stuFixedCols + criteria.size();
             float[] stuWidths = new float[stuTotalCols];
             stuWidths[0] = 2.5f;
@@ -312,6 +317,7 @@ public class PdfReportGenerator {
             stuWidths[3] = 2.5f;
             stuWidths[4] = 1.2f;
             stuWidths[5] = 1.2f;
+            stuWidths[6] = 1.2f;
             for (int i = 0; i < criteria.size(); i++) stuWidths[stuFixedCols + i] = 1.2f;
             PdfPTable stuTable = new PdfPTable(stuWidths);
             stuTable.setWidthPercentage(100);
@@ -321,6 +327,7 @@ public class PdfReportGenerator {
             addHeaderCell(stuTable, "Student ID");
             addHeaderCell(stuTable, "Group");
             addHeaderCell(stuTable, "Markers");
+            addHeaderCell(stuTable, "Final Mark");
             addHeaderCell(stuTable, "Individual Avg");
             addHeaderCell(stuTable, "Group Score Avg");
             for (AssessmentVO c : criteria) {
@@ -332,6 +339,7 @@ public class PdfReportGenerator {
                 addCell(stuTable, row.studentId != null ? row.studentId : "-", NORMAL_FONT);
                 addCell(stuTable, row.groupName != null ? row.groupName : "-", NORMAL_FONT);
                 addCell(stuTable, row.markers != null ? row.markers : "-", NORMAL_FONT);
+                addCell(stuTable, row.finalScore != null ? row.finalScore.toString() : "-", NORMAL_FONT);
                 addCell(stuTable, row.individualTotalAvg != null ? row.individualTotalAvg.toString() : "-", NORMAL_FONT);
                 addCell(stuTable, row.groupScoreAvg != null ? row.groupScoreAvg.toString() : "-", NORMAL_FONT);
                 for (AssessmentVO c : criteria) {

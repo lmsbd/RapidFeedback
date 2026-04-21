@@ -272,7 +272,11 @@ const CreateSubject = observer(() => {
               { title: 'Surname', dataIndex: 'surname', key: 'surname' },
             ]}
             rowKey="studentId"
-            pagination={{ pageSize: 5 }}
+            pagination={{
+              defaultPageSize: 5,
+              showSizeChanger: true,
+              pageSizeOptions: ['5', '10', '20', '50'],
+            }}
           />
         </Card>
       )}
@@ -287,7 +291,11 @@ const CreateSubject = observer(() => {
             dataSource={markerRows}
             columns={markerColumns}
             rowKey="userId"
-            pagination={{ pageSize: 5 }}
+            pagination={{
+              defaultPageSize: 5,
+              showSizeChanger: true,
+              pageSizeOptions: ['5', '10', '20', '50'],
+            }}
           />
         </Card>
       )}

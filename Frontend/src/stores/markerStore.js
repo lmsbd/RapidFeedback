@@ -53,6 +53,38 @@ class MarkerStore {
     this.selectedMarkers = normalized;
   }
 
+  upsertSelectedMarkers(markers) {
+    const list = Array.isArray(markers) ? markers : [];
+    const selectedIdSet = new Set(
+      (this.selectedMarkerIds || [])
+        .map((id) => this.normalizeId(id))
+        .filter((id) => id != null)
+    );
+    const markerMap = new Map();
+
+    (this.selectedMarkers || []).forEach((m) => {
+      const id = this.normalizeId(m?.id ?? m?.userId);
+      if (id == null) return;
+      markerMap.set(id, m);
+    });
+
+    list.forEach((item) => {
+      const id = this.normalizeId(item?.id ?? item?.userId ?? item);
+      if (id == null || !selectedIdSet.has(id)) return;
+      markerMap.set(id, {
+        id,
+        userId: id,
+        userName: item?.userName ?? item?.name ?? '',
+        role: item?.role,
+        email: item?.email,
+      });
+    });
+
+    this.selectedMarkers = Array.from(markerMap.values()).filter((m) =>
+      selectedIdSet.has(this.normalizeId(m?.id ?? m?.userId))
+    );
+  }
+
   clearSelected() {
     this.selectedMarkerIds = [];
     this.selectedMarkers = [];

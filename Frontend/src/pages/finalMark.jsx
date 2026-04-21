@@ -30,13 +30,14 @@ function getStudentName(record) {
 }
 
 function toScore(value) {
+  if (value === null || value === undefined || value === '') return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
 }
 
 function formatScore(value) {
   const num = toScore(value);
-  return num != null ? num.toFixed(2) : '-';
+  return num != null ? num.toFixed(2) : '--';
 }
 
 function getProjectType(rawType) {
@@ -63,7 +64,12 @@ export default function FinalMark() {
   const [publishing, setPublishing] = useState(false);
 
   const isGroupProject = projectType === 'group';
-  const allLocked = items.length > 0 && items.every((item) => !!item.isLocked);
+  const allConfirmed = items.length > 0 && items.every((item) => !!item.isLocked);
+
+  const hasUnsavedEdits = useMemo(
+    () => Object.keys(editedScores).some((k) => editedScores[k] !== undefined),
+    [editedScores]
+  );
 
   const allMarkerNames = useMemo(() => {
     const nameSet = new Map();
@@ -118,7 +124,7 @@ export default function FinalMark() {
   const getRowKey = useCallback(
     (record) => {
       return isGroupProject
-        ? `group-${record.groupId ?? record.id}`
+        ? `group-${record.groupId ?? record.id}-${record.studentId ?? record.id ?? 'na'}`
         : `student-${record.studentId ?? record.id}`;
     },
     [isGroupProject]
@@ -126,11 +132,9 @@ export default function FinalMark() {
 
   const getEditKey = useCallback(
     (record) => {
-      return isGroupProject
-        ? `g-${record.groupId ?? record.id}`
-        : `s-${record.studentId ?? record.id}`;
+      return `s-${record.studentId ?? record.id}`;
     },
-    [isGroupProject]
+    []
   );
 
   const handleScoreChange = useCallback(
@@ -154,6 +158,7 @@ export default function FinalMark() {
     async (record) => {
       const key = getEditKey(record);
       const score = getCurrentScore(record);
+      const groupId = isGroupProject ? Number(record.groupId ?? record.id) : null;
 
       if (score == null) {
         message.warning('Please enter a final mark before saving');
@@ -164,8 +169,8 @@ export default function FinalMark() {
       try {
         await saveFinalMark({
           projectId: Number(projectId),
-          studentId: isGroupProject ? null : record.studentId ?? record.id,
-          groupId: isGroupProject ? record.groupId ?? record.id : null,
+          studentId: record.studentId ?? record.id,
+          groupId,
           finalScore: score,
         });
         message.success('Final mark saved');
@@ -190,17 +195,18 @@ export default function FinalMark() {
       const key = getEditKey(record);
       setLocking((prev) => ({ ...prev, [key]: true }));
       try {
+        const groupId = isGroupProject ? Number(record.groupId ?? record.id) : null;
         await lockFinalMark({
           projectId: Number(projectId),
-          studentId: isGroupProject ? null : record.studentId ?? record.id,
-          groupId: isGroupProject ? record.groupId ?? record.id : null,
+          studentId: record.studentId ?? record.id,
+          groupId,
           isLocked: lock ? 1 : 0,
         });
-        message.success(lock ? 'Final mark locked' : 'Final mark unlocked');
+        message.success(lock ? 'Final mark confirmed' : 'Final mark unconfirmed');
         await fetchData();
       } catch (e) {
         console.error(e);
-        message.error(e?.response?.data?.msg || 'Failed to update lock status');
+        message.error(e?.response?.data?.msg || 'Failed to update confirmation status');
       } finally {
         setLocking((prev) => ({ ...prev, [key]: false }));
       }
@@ -211,9 +217,7 @@ export default function FinalMark() {
   const handleLockAll = useCallback(async () => {
     const unlocked = items.filter((item) => {
       if (item.isLocked) return false;
-      const key = isGroupProject
-        ? `g-${item.groupId ?? item.id}`
-        : `s-${item.studentId ?? item.id}`;
+      const key = getEditKey(item);
       const hasEdited = editedScores[key] != null;
       const hasSaved = item.finalScore != null;
       return hasEdited || hasSaved;
@@ -228,58 +232,74 @@ export default function FinalMark() {
     try {
       let successCount = 0;
       for (const record of unlocked) {
-        const key = isGroupProject
-          ? `g-${record.groupId ?? record.id}`
-          : `s-${record.studentId ?? record.id}`;
+        const key = getEditKey(record);
         const editedVal = editedScores[key];
         const score = editedVal != null ? editedVal : Number(record.finalScore);
 
         if (editedVal != null) {
+          const groupId = isGroupProject ? Number(record.groupId ?? record.id) : null;
           await saveFinalMark({
             projectId: Number(projectId),
-            studentId: isGroupProject ? null : record.studentId ?? record.id,
-            groupId: isGroupProject ? record.groupId ?? record.id : null,
+            studentId: record.studentId ?? record.id,
+            groupId,
             finalScore: score,
           });
         }
 
+        const groupId = isGroupProject ? Number(record.groupId ?? record.id) : null;
         await lockFinalMark({
           projectId: Number(projectId),
-          studentId: isGroupProject ? null : record.studentId ?? record.id,
-          groupId: isGroupProject ? record.groupId ?? record.id : null,
+          studentId: record.studentId ?? record.id,
+          groupId,
           isLocked: 1,
         });
         successCount++;
       }
       setEditedScores({});
-      message.success(`Locked ${successCount} final marks`);
+      message.success(`Confirmed ${successCount} final marks`);
       await fetchData();
     } catch (e) {
       console.error(e);
-      message.error('Failed to lock all marks, some may have been locked');
+      message.error('Failed to confirm all marks, some may have been confirmed');
       await fetchData();
     } finally {
       setLoading(false);
     }
-  }, [items, projectId, isGroupProject, editedScores, fetchData]);
+  }, [items, projectId, editedScores, fetchData, getEditKey, isGroupProject]);
 
   const handlePublish = useCallback(async () => {
+    if (hasUnsavedEdits) {
+      message.warning('Please save all edited final marks before publishing');
+      return;
+    }
+    const notConfirmed = items.filter((item) => !item.isLocked);
+    if (notConfirmed.length > 0) {
+      message.warning('All final marks must be admin confirmed before publishing');
+      return;
+    }
+    const missingFinalScores = items.filter((item) => item.finalScore == null);
+    if (missingFinalScores.length > 0) {
+      message.warning('All rows must have final marks before publishing');
+      return;
+    }
+
     setPublishing(true);
     try {
       const res = await publishReport(projectId);
-      const total = res?.data?.totalStudents ?? res?.totalStudents;
-      message.success(
-        total != null
-          ? `Reports are being sent to ${total} students`
-          : 'Reports are being sent'
-      );
+      const msgText = res?.msg || res?.message || res?.data?.msg || '';
+      message.success(msgText);
     } catch (e) {
       console.error(e);
-      message.error(e?.response?.data?.msg || 'Failed to send reports');
+      message.error(
+        e?.response?.data?.msg ||
+        e?.response?.data?.message ||
+        e?.message ||
+        'Failed to send reports'
+      );
     } finally {
       setPublishing(false);
     }
-  }, [projectId]);
+  }, [projectId, hasUnsavedEdits, items]);
 
   const columns = useMemo(() => {
     const cols = [];
@@ -297,6 +317,12 @@ export default function FinalMark() {
         key: 'name',
         width: 150,
         render: (_, r) => r.groupName ?? r.name ?? '-',
+      });
+      cols.push({
+        title: 'Student Name',
+        key: 'studentName',
+        width: 180,
+        render: (_, r) => getStudentName(r) || '-',
       });
     } else {
       cols.push({
@@ -344,7 +370,7 @@ export default function FinalMark() {
         const scores = (record.markerScores || [])
           .map((s) => toScore(s.score))
           .filter((v) => v != null);
-        if (!scores.length) return '-';
+        if (!scores.length) return '--';
         const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
         return <span className={styles.averageScore}>{avg.toFixed(2)}</span>;
       },
@@ -386,8 +412,8 @@ export default function FinalMark() {
 
         if (record.isLocked) {
           return (
-            <Tag icon={<LockOutlined />} color="blue">
-              Locked
+            <Tag icon={<CheckCircleOutlined />} color="blue">
+              Admin Confirmed
             </Tag>
           );
         }
@@ -418,7 +444,7 @@ export default function FinalMark() {
 
         return (
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <Tooltip title={locked ? 'Unlock to edit' : 'Save final mark'}>
+            <Tooltip title={locked ? 'Unconfirm to edit' : 'Save final mark'}>
               <Button
                 type="link"
                 size="small"
@@ -433,34 +459,34 @@ export default function FinalMark() {
             </Tooltip>
             {locked ? (
               <Popconfirm
-                title="Unlock this final mark?"
+                title="Unconfirm this final mark?"
                 description="This will allow the final mark to be edited again."
                 onConfirm={() => handleLock(record, false)}
-                okText="Unlock"
+                okText="Unconfirm"
                 cancelText="Cancel"
               >
                 <Button
                   type="link"
                   size="small"
-                  icon={<LockOutlined />}
+                  icon={<UnlockOutlined />}
                   loading={isLocking}
                   className={`${styles.actionButton} ${styles.unlockBtn}`}
                 >
-                  Unlock
+                  Unconfirm
                 </Button>
               </Popconfirm>
             ) : (
-              <Tooltip title="Lock final mark">
+              <Tooltip title="Admin confirm final mark">
                 <Button
                   type="link"
                   size="small"
-                  icon={<UnlockOutlined />}
+                  icon={<CheckCircleOutlined />}
                   loading={isLocking}
                   disabled={record.finalScore == null && getCurrentScore(record) == null}
                   onClick={() => handleLock(record, true)}
                   className={`${styles.actionButton} ${styles.lockBtn}`}
                 >
-                  Lock
+                  Confirm
                 </Button>
               </Tooltip>
             )}
@@ -495,10 +521,10 @@ export default function FinalMark() {
         </Title>
         <div className={styles.headerActions}>
           <Popconfirm
-            title="Lock all final marks?"
-            description="All items with a final mark entered will be locked."
+            title="Confirm all final marks?"
+            description="All items with a final mark entered will be admin confirmed."
             onConfirm={handleLockAll}
-            okText="Lock All"
+            okText="Confirm All"
             cancelText="Cancel"
           >
             <Button
@@ -506,11 +532,17 @@ export default function FinalMark() {
               className={styles.lockAllButton}
               loading={loading}
             >
-              Lock All
+              Confirm All
             </Button>
           </Popconfirm>
           <Tooltip
-            title={!allLocked ? 'All items must be locked before publishing' : ''}
+            title={
+              !allConfirmed
+                ? 'All items must be admin confirmed before publishing'
+                : hasUnsavedEdits
+                  ? 'Please save all edited final marks before publishing'
+                  : ''
+            }
           >
             <Popconfirm
               title="Publish grade reports?"
@@ -518,13 +550,13 @@ export default function FinalMark() {
               onConfirm={handlePublish}
               okText="Publish"
               cancelText="Cancel"
-              disabled={!allLocked}
+              disabled={!allConfirmed || hasUnsavedEdits}
             >
               <Button
                 icon={<SendOutlined />}
                 className={styles.publishButton}
                 loading={publishing}
-                disabled={!allLocked}
+                disabled={!allConfirmed || hasUnsavedEdits}
               >
                 Publish
               </Button>
@@ -541,7 +573,7 @@ export default function FinalMark() {
               {isGroupProject ? 'Group Final Marks' : 'Student Final Marks'}
             </Text>
           }
-          bordered={false}
+          variant={"outlined"}
         >
           <Table
             rowKey={getRowKey}

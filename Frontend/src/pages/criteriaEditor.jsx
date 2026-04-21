@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  Alert,
   Card,
   Button,
   Typography,
@@ -179,13 +180,26 @@ const CriteriaEditor = observer(() => {
     form
       .validateFields()
       .then((values) => {
+        const hasZeroWeightingSelected = Array.from(selectedElements).some(
+          (elementId) => Number(values[`weighting_${elementId}`] || 0) === 0
+        );
         const effectiveSelectedIds = Array.from(selectedElements).filter(
           (elementId) => Number(values[`weighting_${elementId}`] || 0) > 0
         );
 
         if (effectiveSelectedIds.length === 0) {
-          message.warning('Please select at least one element');
+          message.warning(
+            'All selected criteria have 0% weighting. Criteria with 0% weighting are treated as not added and will not be saved. Please set at least one weighting above 0%.'
+          );
           return;
+        }
+
+        if (hasZeroWeightingSelected) {
+          message.info({
+            key: 'criteria-zero-weighting',
+            content:
+              'Selected criteria with 0% weighting will be ignored and not saved.',
+          });
         }
 
         // Build the elements array in the specified format
@@ -295,6 +309,13 @@ const CriteriaEditor = observer(() => {
 
       {/* Main Content */}
       <div className={styles.mainContent}>
+        <Alert
+          type="info"
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+          message="Note: Criteria with 0% weighting are treated as not added and will not be saved."
+        />
         <Form
           form={form}
           layout="vertical"

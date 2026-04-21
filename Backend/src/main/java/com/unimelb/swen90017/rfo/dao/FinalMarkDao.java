@@ -20,6 +20,12 @@ public interface FinalMarkDao extends BaseMapper<FinalMarkPO> {
     FinalMarkPO getByProjectAndGroup(@Param("projectId") Long projectId,
                                      @Param("groupId") Long groupId);
 
+    @Select("SELECT * FROM final_mark WHERE project_id = #{projectId} "
+            + "AND student_id = #{studentId} AND group_id = #{groupId} LIMIT 1")
+    FinalMarkPO getByProjectStudentAndGroup(@Param("projectId") Long projectId,
+                                            @Param("studentId") Long studentId,
+                                            @Param("groupId") Long groupId);
+
     @Select("SELECT COUNT(*) FROM mark_record " +
             "WHERE project_id = #{projectId} AND student_id = #{studentId} AND total_score IS NOT NULL")
     int countCompletedMarkersForStudent(@Param("projectId") Long projectId,

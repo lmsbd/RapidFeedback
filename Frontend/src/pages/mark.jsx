@@ -91,6 +91,7 @@ export default function MarkPage() {
   const pageType = searchParams.get('type') || 'mark';
   const isReview = pageType === 'review';
   const rawStudentName = searchParams.get('studentName') || '';
+  const studentCode = searchParams.get('studentId') || '';
   const rawGroupName = searchParams.get('groupName') || '';
   const studentName = rawStudentName ? decodeURIComponent(rawStudentName) : '';
   const groupName = rawGroupName ? decodeURIComponent(rawGroupName) : '';
@@ -98,6 +99,7 @@ export default function MarkPage() {
   const fromGroup = searchParams.get('fromGroup') === '1';
   const returnGroupId = searchParams.get('returnGroupId') || '';
   const returnGroupName = searchParams.get('returnGroupName') || '';
+  const displayGroupName = groupName || returnGroupName;
 
   const isIndividual = !!individualId;
   const targetId = isIndividual ? individualId : groupId;
@@ -219,7 +221,7 @@ export default function MarkPage() {
             maxMark: a?.maxMark,
             markIncrements: a?.markIncrements,
             mark: hasScore ? numericScore : 0,
-            scored: hasScore,
+            scored: pageType === 'mark' ? true : hasScore,
             comment,
           };
         });
@@ -448,7 +450,7 @@ export default function MarkPage() {
                 allowClear
                 showSearch
                 optionFilterProp="label"
-                onDropdownVisibleChange={(open) => {
+                onOpenChange={(open) => {
                   if (open) ensureCommentsLoaded(criteriaId);
                 }}
                 onChange={(v) => {
@@ -490,7 +492,8 @@ export default function MarkPage() {
         />
         <div className={styles.headerMain}>
           <Title level={3} className={styles.title}>
-            {detail?.projectName ? detail.projectName : 'Mark'}
+            {detail?.projectName ? detail.projectName : 'Mark '}
+            {fromGroup && isIndividual ? ' '+displayGroupName || '-': null}
           </Title>
           <div className={styles.metaRow}>
             <Space size={12} wrap>
@@ -499,8 +502,11 @@ export default function MarkPage() {
               </Text> */}
               <Text>
                 {isIndividual ? 'Student Name' : 'Group Name'}:{' '}
-                {targetName || '-'}
+                {isIndividual
+                  ? `${targetName || '-'}${studentCode ? ` (${studentCode})` : ''}`
+                  : targetName || '-'}
               </Text>
+
             </Space>
           </div>
         </div>
@@ -550,7 +556,7 @@ export default function MarkPage() {
           <Text className={styles.totalValue}>
             {Number.isFinite(Number(totalScore))
               ? Number(totalScore).toFixed(2)
-              : '0.00'}
+              : '--'}
           </Text>
         </div>
         <Button type="primary" loading={saving} onClick={handleSave}>

@@ -5,26 +5,27 @@
   align-items: center;
   margin-bottom: 24px;
   gap: 16px;
+  .backButton {
+    border-radius: 8px;
+    background-color: @button-color;
+    border: none;
+    padding: 8px 20px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    color: @secondary-blue;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+  }
+  :global(.ant-btn).backButton:hover {
+    background-color: @button-color-hover;
+    color: @secondary-blue;
+    box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
+    transform: translateY(-1px);
+  }
 }
 
-.backButton {
-  border-radius: 8px;
-  background-color: @button-color;
-  border: none;
-  padding: 8px 20px;
-  height: 40px;
-  font-weight: 600;
-  font-size: 16px;
-  color: @secondary-blue;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
-}
-:global(.ant-btn).backButton:hover {
-  background-color: @button-color-hover;
-  color: @secondary-blue;
-  box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
-  transform: translateY(-1px);
-}
+
 
 .pageTitle {
   margin: 0 !important;
@@ -73,27 +74,27 @@
     text-align: center;
     padding-top: 24px;
     border-top: 1px solid #f0f0f0;
-  }
-
-  .submitButton {
-    min-width: 200px;
-    height: 48px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    background-color: @button-color;
-    border: none;
-    color: @secondary-blue;
-    box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
-    transition: all 0.3s ease;
-
-    &:hover {
+    .submitButton {
+      min-width: 200px;
+      height: 48px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      background-color: @button-color;
+      border: none;
+      color: @secondary-blue;
+      box-shadow: 0 2px 4px rgba(3, 15, 67, 0.2);
+      transition: all 0.3s ease;
+    }
+    :global(.ant-btn).submitButton:hover {
       background-color: @button-color-hover;
       color: @secondary-blue;
       box-shadow: 0 4px 8px rgba(3, 15, 67, 0.3);
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
   }
+
+
 
   .dateRangeContainer {
     display: flex;

@@ -24,6 +24,7 @@ import com.unimelb.swen90017.rfo.dao.MarkRecordDao;
 import com.unimelb.swen90017.rfo.dao.StudentDao;
 import com.unimelb.swen90017.rfo.dao.StudentProjectDao;
 import com.unimelb.swen90017.rfo.dao.ProjectDao;
+import com.unimelb.swen90017.rfo.dao.SubjectDao;
 import com.unimelb.swen90017.rfo.dao.UserDao;
 import com.unimelb.swen90017.rfo.pojo.dto.AssessmentCriteriaDTO;
 import com.unimelb.swen90017.rfo.pojo.dto.GroupDTO;
@@ -35,7 +36,6 @@ import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectRequestVO;
 import com.unimelb.swen90017.rfo.service.EmailService;
 import com.unimelb.swen90017.rfo.service.ProjectService;
 import com.unimelb.swen90017.rfo.util.PdfReportGenerator;
-import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectStudentListRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.StudentResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupWithStudentResponseVO;
@@ -43,8 +43,8 @@ import com.unimelb.swen90017.rfo.pojo.vo.GroupWithStudentResponseVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,9 +74,14 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     @Autowired
     private UserDao userDao;
     @Autowired
+    private SubjectDao subjectDao;
+    @Autowired
     private FinalMarkDao finalMarkDao;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    @Lazy
+    private ProjectServiceImpl self;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -177,7 +182,13 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     }
 
     private void insertMarkers(Long projectId, Long subjectId, List<Long> markerList) {
+        Set<Long> validMarkerIds = subjectDao.getMarkersBySubjectId(subjectId).stream()
+                .map(m -> m.getUserId())
+                .collect(Collectors.toSet());
         for (Long markerId : markerList) {
+            if (!validMarkerIds.contains(markerId)) {
+                throw new BusinessException(400, "Marker " + markerId + " is not assigned to this subject");
+            }
             projectDao.insertUserProject(markerId, subjectId, projectId);
         }
     }
@@ -279,6 +290,22 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
             throw new BusinessException(404, "Project not found");
         }
         return projectDao.countMarkRecordsByProjectId(projectId) > 0;
+    }
+
+    @Override
+    public List<UserResponseVO> getMarkers(Long projectId, Long subjectId) {
+        Long resolvedSubjectId;
+        if (projectId != null) {
+            ProjectPO projectPO = this.baseMapper.selectById(projectId);
+            if (projectPO == null) {
+                throw new BusinessException(404, "Project not found");
+            }
+            resolvedSubjectId = projectPO.getSubjectId();
+        } else {
+            resolvedSubjectId = subjectId;
+        }
+        List<UserResponseVO> markers = subjectDao.getMarkersBySubjectId(resolvedSubjectId);
+        return markers == null ? new ArrayList<>() : markers;
     }
 
     @Override
@@ -629,14 +656,22 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                 count += members.size();
             }
             totalStudents = count;
-            sendGroupReportsAsync(project, criteria, new ArrayList<>(groupIds));
+            // Call through Spring proxy so @Async is applied.
+            self.sendGroupReportsAsync(project, criteria, new ArrayList<>(groupIds));
         } else {
             List<MarkRecordPO> records = markRecordDao.getByProjectId(projectId);
             if (records == null || records.isEmpty()) {
                 throw new BusinessException(400, "No marked students found in this project");
             }
-            totalStudents = records.size();
-            sendIndividualReportsAsync(project, criteria, records);
+            // mark_record has one row per marker → dedupe by studentId so the count
+            // matches the number of student emails actually sent.
+            LinkedHashSet<Long> studentIds = new LinkedHashSet<>();
+            for (MarkRecordPO record : records) {
+                if (record.getStudentId() != null) studentIds.add(record.getStudentId());
+            }
+            totalStudents = studentIds.size();
+            // Call through Spring proxy so @Async is applied.
+            self.sendIndividualReportsAsync(project, criteria, records);
         }
 
         return SendReportResponseVO.builder()
@@ -645,10 +680,23 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                 .build();
     }
 
+    /**
+     * Admins receive summary reports only for projects under subjects they are linked to.
+     * Falls back to an empty list if the project has no subject assigned.
+     */
+    private List<UserPO> resolveSubjectAdmins(ProjectPO project) {
+        if (project == null || project.getSubjectId() == null) {
+            log.warn("Project {} has no subject assigned — skipping admin summary recipients",
+                    project != null ? project.getId() : null);
+            return Collections.emptyList();
+        }
+        return userDao.getAdminsBySubjectId(project.getSubjectId());
+    }
+
     @Async
     public void sendIndividualReportsAsync(ProjectPO project, List<AssessmentVO> criteria,
                                             List<MarkRecordPO> records) {
-        List<UserPO> admins = userDao.getAllAdmins();
+        List<UserPO> admins = resolveSubjectAdmins(project);
         Map<Long, UserPO> markerCache = new LinkedHashMap<>();
         List<PdfReportGenerator.IndividualSummaryRow> summaryRows = new ArrayList<>();
         List<BigDecimal> finalScores = new ArrayList<>();
@@ -825,7 +873,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
     @Async
     public void sendGroupReportsAsync(ProjectPO project, List<AssessmentVO> criteria,
                                        List<Long> groupIds) {
-        List<UserPO> admins = userDao.getAllAdmins();
+        List<UserPO> admins = resolveSubjectAdmins(project);
         Map<Long, UserPO> markerCache = new LinkedHashMap<>();
 
         List<PdfReportGenerator.GroupSummaryRowV2> groupSummaryRows = new ArrayList<>();
@@ -839,13 +887,6 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                     log.error("Group not found for groupId={}", groupId);
                     continue;
                 }
-
-                FinalMarkPO finalPO = finalMarkDao.getByProjectAndGroup(project.getId(), groupId);
-                if (finalPO == null || finalPO.getFinalScore() == null) {
-                    log.error("Missing final_mark for group id={} in project {}", groupId, project.getId());
-                    continue;
-                }
-                BigDecimal finalScore = finalPO.getFinalScore();
 
                 List<StudentPO> members = projectDao.selectStudentsByGroupIdInProject(groupId);
                 BigDecimal groupTotalScore = groupMarkRecordDao.getGroupTotalScore(project.getId(), groupId);
@@ -884,6 +925,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
 
                 // Group-level per-criteria score pool (all members × all markers)
                 Map<Long, List<BigDecimal>> groupCriteriaPool = new LinkedHashMap<>();
+                // Per-student final scores inside this group, used for the group average on the summary PDF.
+                List<BigDecimal> memberFinalScores = new ArrayList<>();
 
                 String subject = "[RapidFeedback] Group Assessment Report — " + project.getName() + " — " + group.getGroupName();
 
@@ -893,6 +936,15 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                         log.error("No mark_record for student pk={} in group id={}", member.getId(), groupId);
                         continue;
                     }
+
+                    FinalMarkPO memberFinalPO = finalMarkDao.getByProjectStudentAndGroup(
+                            project.getId(), member.getId(), groupId);
+                    if (memberFinalPO == null || memberFinalPO.getFinalScore() == null) {
+                        log.error("Missing final_mark for student pk={} in group id={} project {}",
+                                member.getId(), groupId, project.getId());
+                        continue;
+                    }
+                    BigDecimal memberFinalScore = memberFinalPO.getFinalScore();
 
                     List<PdfReportGenerator.MarkerIndividualBlock> markerBlocks = new ArrayList<>();
                     Map<Long, List<BigDecimal>> studentCriteriaPool = new LinkedHashMap<>();
@@ -939,7 +991,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                         try {
                             byte[] pdf = PdfReportGenerator.generateGroupReport(
                                     member, group, members, project, criteria,
-                                    markerBlocks, groupTotalScore, groupComments, finalScore);
+                                    markerBlocks, groupTotalScore, groupComments, memberFinalScore);
                             String filename = group.getGroupName().replaceAll("\\s+", "_")
                                     + "_" + member.getFirstName() + "_" + member.getSurname()
                                     + "_Assessment_Report.pdf";
@@ -958,19 +1010,22 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectDao, ProjectPO> imple
                             member.getStudentId() != null ? String.valueOf(member.getStudentId()) : null,
                             group.getGroupName(),
                             String.join(", ", markerNames),
+                            memberFinalScore,
                             averageOf(indivTotals),
                             averageOf(groupScoresForStudent),
                             averageMap(studentCriteriaPool)));
+
+                    memberFinalScores.add(memberFinalScore);
+                    finalScores.add(memberFinalScore);
                 }
 
                 groupSummaryRows.add(new PdfReportGenerator.GroupSummaryRowV2(
                         group.getGroupName(),
                         members.stream().map(s -> s.getFirstName() + " " + s.getSurname())
                                 .collect(Collectors.joining(", ")),
-                        finalScore,
+                        averageOf(memberFinalScores),
                         groupTotalScore,
                         averageMap(groupCriteriaPool)));
-                finalScores.add(finalScore);
 
                 // Include markers who scored any member even if they did not write a group comment
                 List<Long> mids = groupMarkRecordDao.getMarkerIdsByGroup(project.getId(), groupId);

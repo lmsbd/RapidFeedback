@@ -307,6 +307,7 @@ public interface ProjectDao extends BaseMapper<ProjectPO> {
     """)
     List<UserDetailVO> getMarkersByProjectId(@Param("projectId") Long projectId);
 
+
     @Select("""
     SELECT u.id AS id, u.username AS username, u.email AS email
     FROM marker_student ms
@@ -382,33 +383,54 @@ public interface ProjectDao extends BaseMapper<ProjectPO> {
     void updateProjectNameAndCountdown(@Param("id") Long id, @Param("name") String name, @Param("countdown") Long countdown);
 
     @Select("""
-    SELECT mr.marker_id AS markerId,
+    SELECT am.marker_id AS markerId,
            u.username AS markerName,
            MAX(mr.total_score) AS score
-    FROM mark_record mr
-    INNER JOIN user u ON u.id = mr.marker_id
-    WHERE mr.project_id = #{projectId}
-      AND mr.student_id = #{studentId}
-      AND mr.total_score IS NOT NULL
-    GROUP BY mr.marker_id, u.username
-    ORDER BY mr.marker_id
+    FROM (
+        SELECT marker_id FROM marker_student
+        WHERE project_id = #{projectId} AND student_id = #{studentId}
+        UNION
+        SELECT marker_id FROM mark_record
+        WHERE project_id = #{projectId} AND student_id = #{studentId}
+    ) am
+    INNER JOIN user u ON u.id = am.marker_id
+    LEFT JOIN mark_record mr ON mr.project_id = #{projectId}
+                             AND mr.marker_id = am.marker_id
+                             AND mr.student_id = #{studentId}
+                             AND mr.total_score IS NOT NULL
+    GROUP BY am.marker_id, u.username
+    ORDER BY am.marker_id
     """)
     List<MarkerScoreVO> getMarkerScoresByProjectAndStudent(@Param("projectId") Long projectId,
                                                            @Param("studentId") Long studentId);
 
     @Select("""
-    SELECT mr.marker_id AS markerId,
+    SELECT am.marker_id AS markerId,
            u.username AS markerName,
            MIN(mr.group_score) AS score
-    FROM mark_record mr
-    INNER JOIN group_student gs ON gs.student_id = mr.student_id
-    INNER JOIN user u ON u.id = mr.marker_id
-    WHERE mr.project_id = #{projectId}
-      AND gs.group_id = #{groupId}
-      AND mr.group_score IS NOT NULL
-      AND (gs.delete_status = 0 OR gs.delete_status IS NULL)
-    GROUP BY mr.marker_id, u.username
-    ORDER BY mr.marker_id
+    FROM (
+        SELECT marker_id FROM marker_group
+        WHERE project_id = #{projectId} AND group_id = #{groupId}
+        UNION
+        SELECT DISTINCT mr2.marker_id
+        FROM mark_record mr2
+        INNER JOIN group_student gs2 ON gs2.student_id = mr2.student_id
+        WHERE mr2.project_id = #{projectId}
+          AND gs2.group_id = #{groupId}
+          AND (gs2.delete_status = 0 OR gs2.delete_status IS NULL)
+    ) am
+    INNER JOIN user u ON u.id = am.marker_id
+    LEFT JOIN mark_record mr ON mr.project_id = #{projectId}
+                             AND mr.marker_id = am.marker_id
+                             AND mr.group_score IS NOT NULL
+                             AND EXISTS (
+                                 SELECT 1 FROM group_student gs
+                                 WHERE gs.student_id = mr.student_id
+                                   AND gs.group_id = #{groupId}
+                                   AND (gs.delete_status = 0 OR gs.delete_status IS NULL)
+                             )
+    GROUP BY am.marker_id, u.username
+    ORDER BY am.marker_id
     """)
     List<MarkerScoreVO> getMarkerScoresByProjectAndGroup(@Param("projectId") Long projectId,
                                                           @Param("groupId") Long groupId);

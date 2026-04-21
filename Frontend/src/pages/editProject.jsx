@@ -498,7 +498,7 @@ const EditProject = observer(() => {
 
   const handleEditMarkers = () => {
     persistFormToCache();
-    history.push(`/selectMarker?fromEditProject=${projectId}`);
+    history.push(`/selectMarker?projectId=${projectId}&fromEditProject=1`);
   };
 
   const teams = useMemo(() => {
@@ -522,10 +522,10 @@ const EditProject = observer(() => {
   }, [detail?.teams, studentStore.groupStudentsList]);
 
   const markerOptions = markerStore.selectedMarkers.map((marker) => {
-    const id = Number(marker.id);
+    const id = normalizeId(marker?.id ?? marker?.userId);
     return {
       value: id,
-      label: `${marker.name ?? `Marker ${id}`} (#${id})`,
+      label: `${marker.userName ?? marker.name ?? `Marker ${id}`} (#${id})`,
     };
   });
 
@@ -828,7 +828,7 @@ const EditProject = observer(() => {
       </div>
       {isMarking && (
         <div style={{ color: 'red', marginBottom: 16 }}>
-          You can only edit the project after the marking has started.
+          You can only edit the project name after the marking has started.
         </div>
       )}
       <div className={styles.mainContent}>

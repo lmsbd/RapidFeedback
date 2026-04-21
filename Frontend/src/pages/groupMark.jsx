@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { history, useLocation } from 'umi';
 import {
   Button,
@@ -8,16 +8,10 @@ import {
   Space,
   Spin,
   Table,
-  Tag,
   Typography,
   message,
 } from 'antd';
-import {
-  EditOutlined,
-  ReloadOutlined,
-  CaretRightOutlined,
-  PauseOutlined,
-} from '@ant-design/icons';
+import { EditOutlined } from '@ant-design/icons';
 import BackButton from '../components/BackButton/BackButton';
 import {
   getProjectDetail,
@@ -31,20 +25,6 @@ const { TextArea } = Input;
 
 function getStudentName(student) {
   return `${student?.firstName ?? ''} ${student?.surname ?? ''}`.trim();
-}
-
-function normalizeDurationMs(ms) {
-  const num = Number(ms);
-  if (!Number.isFinite(num)) return null;
-  return Math.max(0, Math.floor(num));
-}
-
-function formatMMSSFromMs(ms) {
-  if (!Number.isFinite(ms)) return '-';
-  const seconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
 function calcTotalScore(assessments) {
@@ -77,7 +57,6 @@ export default function GroupMarkPage() {
   const isReview = pageType === 'review';
 
   const [loading, setLoading] = useState(false);
-  const [detail, setDetail] = useState(null);
   const [students, setStudents] = useState([]);
   const [studentScores, setStudentScores] = useState({});
   // per-student group score: { [studentId]: number }
@@ -85,75 +64,11 @@ export default function GroupMarkPage() {
   const [groupComment, setGroupComment] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const countdownMs = useMemo(() => {
-    const descArr = Array.isArray(detail?.description)
-      ? detail.description
-      : [];
-    const first = descArr[0] || null;
-    return normalizeDurationMs(first?.countdown);
-  }, [detail]);
-
-  const [remainingMs, setRemainingMs] = useState(null);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const timerBaselineRef = useRef({ startedAt: 0, baselineMs: 0 });
-
-  useEffect(() => {
-    if (isReview || !Number.isFinite(countdownMs)) {
-      setRemainingMs(null);
-      setTimerRunning(false);
-      return;
-    }
-    setRemainingMs(countdownMs);
-    setTimerRunning(false);
-    timerBaselineRef.current = { startedAt: 0, baselineMs: countdownMs };
-  }, [countdownMs, isReview]);
-
-  useEffect(() => {
-    if (isReview || !timerRunning || !Number.isFinite(remainingMs)) return;
-    let timer = null;
-    const tick = () => {
-      const { startedAt, baselineMs } = timerBaselineRef.current;
-      const elapsed = Date.now() - startedAt;
-      const next = Math.max(0, baselineMs - elapsed);
-      setRemainingMs(next);
-      if (next <= 0) {
-        setTimerRunning(false);
-        if (timer) clearInterval(timer);
-      }
-    };
-    tick();
-    timer = window.setInterval(tick, 250);
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [timerRunning]);
-
-  const handleTimerToggle = () => {
-    if (isReview || !Number.isFinite(remainingMs) || remainingMs <= 0) return;
-    if (timerRunning) {
-      setTimerRunning(false);
-      return;
-    }
-    timerBaselineRef.current = {
-      startedAt: Date.now(),
-      baselineMs: remainingMs,
-    };
-    setTimerRunning(true);
-  };
-
-  const handleTimerReset = () => {
-    if (isReview || !Number.isFinite(countdownMs)) return;
-    setTimerRunning(false);
-    setRemainingMs(countdownMs);
-    timerBaselineRef.current = { startedAt: 0, baselineMs: countdownMs };
-  };
-
   const fetchData = useCallback(async () => {
     if (!projectId || !groupId) return;
     setLoading(true);
     try {
       const res = await getProjectDetail(projectId);
-      setDetail(res || null);
 
       const teams = Array.isArray(res?.teams) ? res.teams : [];
       const team = teams.find((t) => String(t?.id) === String(groupId));
@@ -250,6 +165,7 @@ export default function GroupMarkPage() {
     const params = new URLSearchParams({
       projectId: String(projectId),
       individualId: String(sid),
+      studentId: String(student?.studentId ?? ''),
       studentName: name || 'Student',
       type: 'mark',
       fromGroup: '1',
@@ -265,6 +181,7 @@ export default function GroupMarkPage() {
     const params = new URLSearchParams({
       projectId: String(projectId),
       individualId: String(sid),
+      studentId: String(student?.studentId ?? ''),
       studentName: name || 'Student',
       type: 'review',
       fromGroup: '1',
@@ -415,37 +332,6 @@ export default function GroupMarkPage() {
             </Text>
           </div>
         </div>
-        {!isReview && (
-          <div className={styles.countdown}>
-            {remainingMs === null ? (
-              <Tag>--</Tag>
-            ) : remainingMs <= 0 ? (
-              <Tag color="red">Time is up</Tag>
-            ) : (
-              <div className={styles.countdownInner}>
-                <Text type="secondary">{formatMMSSFromMs(remainingMs)}</Text>
-                <Space size={4}>
-                  <Button
-                    size="small"
-                    icon={
-                      timerRunning ? (
-                        <PauseOutlined />
-                      ) : (
-                        <CaretRightOutlined />
-                      )
-                    }
-                    onClick={handleTimerToggle}
-                  />
-                  <Button
-                    size="small"
-                    icon={<ReloadOutlined />}
-                    onClick={handleTimerReset}
-                  />
-                </Space>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className={styles.content}>

@@ -30,6 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Subject service implementation
@@ -215,25 +219,36 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectDao, SubjectPO> imple
             throw new Exception("Subject not found");
         }
 
-        List<Long> requestStudentIds = subjectRequestVO.getStudents() == null
-                ? new ArrayList<>()
-                : subjectRequestVO.getStudents().stream()
-                    .map(StudentResponseVO::getId)
-                    .distinct()
-                    .toList();
-
-    
-        List<Long> dbStudentIds = studentSubjectDao.selectStudentIdsBySubjectId(subjectId);
-        if (dbStudentIds == null) {
-            dbStudentIds = new ArrayList<>();
+        // Build a map of request students keyed by business student number
+        List<StudentResponseVO> requestStudents = subjectRequestVO.getStudents() == null
+                ? new ArrayList<>() : subjectRequestVO.getStudents();
+        Map<Long, StudentResponseVO> requestStudentMap = new HashMap<>();
+        for (StudentResponseVO s : requestStudents) {
+            if (s.getStudentId() != null) {
+                requestStudentMap.put(s.getStudentId(), s);
+            }
         }
+        Set<Long> requestStudentNumbers = requestStudentMap.keySet();
 
+        // Load current subject students and build bidirectional maps
+        List<Long> dbStudentPks = studentSubjectDao.selectStudentIdsBySubjectId(subjectId);
+        if (dbStudentPks == null) dbStudentPks = new ArrayList<>();
 
-        List<Long> addStudentIds = new ArrayList<>(requestStudentIds);
-        addStudentIds.removeAll(dbStudentIds);
+        Map<Long, Long> dbNumberToPk = new HashMap<>();  // business number → DB PK
+        for (Long pk : dbStudentPks) {
+            StudentPO s = studentDao.selectById(pk);
+            if (s != null && s.getStudentId() != null) {
+                dbNumberToPk.put(s.getStudentId(), pk);
+            }
+        }
+        Set<Long> dbStudentNumbers = dbNumberToPk.keySet();
 
-        List<Long> removeStudentIds = new ArrayList<>(dbStudentIds);
-        removeStudentIds.removeAll(requestStudentIds);
+        // Diff by business student number
+        Set<Long> addStudentNumbers = new HashSet<>(requestStudentNumbers);
+        addStudentNumbers.removeAll(dbStudentNumbers);
+
+        Set<Long> removeStudentNumbers = new HashSet<>(dbStudentNumbers);
+        removeStudentNumbers.removeAll(requestStudentNumbers);
 
         List<Long> requestMarkerIds = subjectRequestVO.getMarkerIds() == null
                 ? new ArrayList<>()
@@ -261,18 +276,13 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectDao, SubjectPO> imple
 
         // ===== 先校验 =====
 
-        for (Long studentId : addStudentIds) {
-            StudentPO student = studentDao.selectById(studentId);
-            if (student == null) {
-                throw new Exception("Student does not exist, studentId=" + studentId);
-            }
-        }
-
-        for (Long studentId : removeStudentIds) {
-            StudentPO student = studentDao.selectById(studentId);
-            int count = studentProjectDao.countBySubjectIdAndStudentId(subjectId, studentId);
+        // Validate students to remove (look up by DB PK)
+        for (Long studentNumber : removeStudentNumbers) {
+            Long studentPk = dbNumberToPk.get(studentNumber);
+            if (studentPk == null) continue;
+            int count = studentProjectDao.countBySubjectIdAndStudentId(subjectId, studentPk);
             if (count > 0) {
-                throw new Exception("Student " + student.getStudentId() + " is already assigned to a project under this subject and cannot be removed");
+                throw new Exception("Student " + studentNumber + " is already assigned to a project under this subject and cannot be removed");
             }
         }
 
@@ -300,12 +310,34 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectDao, SubjectPO> imple
         subjectPO.setDescription(subjectRequestVO.getDescription());
         subjectDao.updateById(subjectPO);
 
-        for (Long studentId : addStudentIds) {
-            studentSubjectDao.insertOne(studentId, subjectId);
+        // Add students: find-or-create, then link to subject
+        for (Long studentNumber : addStudentNumbers) {
+            StudentPO existing = studentDao.findByStudentId(studentNumber);
+            Long studentPk;
+            if (existing != null) {
+                studentPk = existing.getId();
+            } else {
+                StudentResponseVO req = requestStudentMap.get(studentNumber);
+                StudentPO newStudent = StudentPO.builder()
+                        .studentId(studentNumber)
+                        .email(req.getEmail())
+                        .firstName(req.getFirstName())
+                        .surname(req.getSurname())
+                        .deleteStatus("0")
+                        .build();
+                studentDao.insert(newStudent);
+                studentPk = newStudent.getId();
+                log.info("Created new student: studentId={}, name={} {}", studentNumber, req.getFirstName(), req.getSurname());
+            }
+            studentSubjectDao.insertOne(studentPk, subjectId);
         }
 
-        for (Long studentId : removeStudentIds) {
-            studentSubjectDao.deleteOne(studentId, subjectId);
+        // Remove students from subject
+        for (Long studentNumber : removeStudentNumbers) {
+            Long studentPk = dbNumberToPk.get(studentNumber);
+            if (studentPk != null) {
+                studentSubjectDao.deleteOne(studentPk, subjectId);
+            }
         }
 
         for (Long markerId : addMarkerIds) {

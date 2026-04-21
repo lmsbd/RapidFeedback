@@ -13,6 +13,7 @@ import com.unimelb.swen90017.rfo.pojo.vo.GroupAssessmentScoresResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.GroupResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.SendReportResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.StudentAssessmentScoresResponseVO;
+import com.unimelb.swen90017.rfo.pojo.vo.UserResponseVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.ProjectStudentListRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.GroupAssessmentScoresRequestVO;
 import com.unimelb.swen90017.rfo.pojo.vo.request.SendReportRequestVO;
@@ -245,6 +246,21 @@ public class ProjectController {
         GroupAssessmentScoresResponseVO vo = projectService.getGroupAssessmentScores(
                 requestVO.getProjectId(), requestVO.getGroupId());
         return Result.success(vo);
+    }
+
+    @GetMapping("/getMarkers")
+    public Result<List<UserResponseVO>> getMarkers(
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long subjectId) {
+        if (projectId == null && subjectId == null) {
+            throw new BusinessException(400, "Either projectId or subjectId is required");
+        }
+        if (projectId != null && subjectId != null) {
+            throw new BusinessException(400, "Only one of projectId or subjectId should be provided");
+        }
+        log.info("Get markers by projectId: {}, subjectId: {}", projectId, subjectId);
+        List<UserResponseVO> markers = projectService.getMarkers(projectId, subjectId);
+        return Result.success(markers);
     }
 
     @PostMapping("/sendReport")

@@ -87,7 +87,7 @@ public class MarkServiceImpl implements MarkService {
         GroupMarkRecordPO groupMarkRecord = groupMarkRecordDao.getByProjectGroupAndMarker(projectId, groupId, markerId);
         String comment = groupMarkRecord != null ? groupMarkRecord.getComment() : null;
 
-        List<GroupStudentMarkDTO> students = groupMarkRecordDao.getStudentGroupScores(projectId, groupId);
+        List<GroupStudentMarkDTO> students = groupMarkRecordDao.getStudentGroupScores(projectId, groupId, markerId);
 
         return GroupMarkResponseVO.builder()
                 .projectId(projectId)

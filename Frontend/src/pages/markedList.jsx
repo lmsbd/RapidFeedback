@@ -156,6 +156,7 @@ export default function MarkedList() {
         const params = new URLSearchParams({
           projectId: String(projectId),
           individualId: String(record.id),
+          studentId: String(record.studentId ?? ''),
           studentName: getStudentName(record) || 'Student',
           type: mode,
         });
@@ -405,7 +406,7 @@ export default function MarkedList() {
         <Card
           className={styles.projectSection}
           title={<Text strong>{unmarkedTitle}</Text>}
-          bordered
+          variant
         >
           {unmarked.length > 0 ? (
             <Table
@@ -429,7 +430,7 @@ export default function MarkedList() {
         <Card
           className={styles.projectSection}
           title={<Text strong>{markedTitle}</Text>}
-          bordered
+          variant
         >
           {marked.length > 0 ? (
             <Table
