@@ -8,8 +8,12 @@
     "\\Backend\\src\\main\\java\\com",
     "\\Backend\\src\\main\\java\\com\\unimelb",
     "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017",
-    "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017\\rfo"
+    "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017\\rfo",
+    "\\Backend\\src\\main\\resources",
+    "\\Frontend",
+    "\\Frontend\\src",
+    "\\Frontend\\src\\utils"
   ],
-  "SelectedNode": "\\Backend\\src\\main\\java\\com\\unimelb\\swen90017\\rfo\\config\\SecurityConfig.java",
+  "SelectedNode": "\\Frontend\\src\\utils\\request.js",
   "PreviewInSolutionExplorer": false
 }

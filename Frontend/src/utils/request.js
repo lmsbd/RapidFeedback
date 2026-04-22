@@ -5,7 +5,7 @@ const request = axios.create({
   baseURL:
     process.env.NODE_ENV === 'development'
       ? '/api'
-      : 'https://springboot-1ti1-241279-4-1418309433.sh.run.tcloudbase.com/rfo/api',
+      : 'https://springboot-eey1-249610-6-1418309433.sh.run.tcloudbase.com/rfo/api',
 
   timeout: 10000,
   withCredentials: false,
